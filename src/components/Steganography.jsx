@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 /**
  * 图片隐写术
  * - 在图片像素中隐藏文字
- * - 完全不可见
+ * - 支持中文 (UTF-8)
  * - 可用于版权保护
  */
 const Steganography = () => {
@@ -15,21 +15,24 @@ const Steganography = () => {
     const [result, setResult] = useState(null);
     const canvasRef = useRef(null);
 
-    // 将文字转换为二进制
-    const textToBinary = (text) => {
-        return text.split('').map((char) => {
-            return char.charCodeAt(0).toString(2).padStart(8, '0');
-        }).join('');
+    // 魔数标记：用于识别隐写数据的开始
+    const MAGIC = [0x4C, 0x59, 0x52, 0x41]; // "LYRA"
+
+    // 将 UTF-8 字符串转换为字节数组
+    const stringToBytes = (str) => {
+        const encoder = new TextEncoder();
+        return encoder.encode(str);
     };
 
-    // 将二进制转换为文字
-    const binaryToText = (binary) => {
-        const bytes = binary.match(/.{8}/g) || [];
-        return bytes.map((byte) => {
-            const charCode = parseInt(byte, 2);
-            if (charCode === 0) return '';
-            return String.fromCharCode(charCode);
-        }).join('');
+    // 将字节数组转换为 UTF-8 字符串
+    const bytesToString = (bytes) => {
+        const decoder = new TextDecoder('utf-8');
+        return decoder.decode(new Uint8Array(bytes));
+    };
+
+    // 将字节转换为 8 位二进制字符串
+    const byteToBinary = (byte) => {
+        return byte.toString(2).padStart(8, '0');
     };
 
     // 上传图片
@@ -57,20 +60,38 @@ const Steganography = () => {
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
 
-            // 添加结束标记
-            const binaryMessage = textToBinary(message + '\0\0\0');
+            // 将消息转换为字节
+            const messageBytes = stringToBytes(message);
 
-            if (binaryMessage.length > data.length / 4) {
-                alert('消息太长，请使用更大的图片或更短的消息');
+            // 构建数据包: [魔数 4字节] + [长度 4字节] + [消息内容]
+            const length = messageBytes.length;
+            const lengthBytes = [
+                (length >> 24) & 0xFF,
+                (length >> 16) & 0xFF,
+                (length >> 8) & 0xFF,
+                length & 0xFF
+            ];
+
+            const allBytes = [...MAGIC, ...lengthBytes, ...messageBytes];
+
+            // 将字节转换为二进制位
+            let binaryData = '';
+            for (const byte of allBytes) {
+                binaryData += byteToBinary(byte);
+            }
+
+            // 检查图片容量
+            const maxBits = Math.floor(data.length / 4); // 每个像素用 R 通道 1 位
+            if (binaryData.length > maxBits) {
+                alert(`消息太长！当前图片最多可隐藏 ${Math.floor(maxBits / 8 - 8)} 字节`);
                 setIsProcessing(false);
                 return;
             }
 
-            // 在 RGB 通道的最低位隐藏信息
-            for (let i = 0; i < binaryMessage.length; i++) {
-                const bit = parseInt(binaryMessage[i]);
-                const pixelIndex = i * 4; // 每个像素4个值 (RGBA)
-                // 修改 R 通道的最低位
+            // 在每个像素的 R 通道最低位隐藏数据
+            for (let i = 0; i < binaryData.length; i++) {
+                const bit = parseInt(binaryData[i]);
+                const pixelIndex = i * 4; // RGBA
                 data[pixelIndex] = (data[pixelIndex] & 0xFE) | bit;
             }
 
@@ -98,26 +119,60 @@ const Steganography = () => {
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
 
-            // 提取 R 通道的最低位
-            let binary = '';
-            for (let i = 0; i < data.length; i += 4) {
-                binary += (data[i] & 1).toString();
-
-                // 每8位检查是否为结束标记
-                if (binary.length % 8 === 0 && binary.length >= 24) {
-                    const lastThreeChars = binaryToText(binary.slice(-24));
-                    if (lastThreeChars === '\0\0\0') {
-                        binary = binary.slice(0, -24);
-                        break;
-                    }
+            // 提取所有 R 通道的最低位
+            const extractBits = (count) => {
+                let bits = '';
+                for (let i = 0; i < count && i * 4 < data.length; i++) {
+                    bits += (data[i * 4] & 1).toString();
                 }
+                return bits;
+            };
 
-                // 防止无限循环
-                if (binary.length > 100000) break;
+            // 将二进制位转换为字节数组
+            const bitsToBytes = (bits) => {
+                const bytes = [];
+                for (let i = 0; i < bits.length; i += 8) {
+                    bytes.push(parseInt(bits.substr(i, 8), 2));
+                }
+                return bytes;
+            };
+
+            // 读取魔数 + 长度 (8 字节 = 64 位)
+            const headerBits = extractBits(64);
+            const headerBytes = bitsToBytes(headerBits);
+
+            // 验证魔数
+            const magic = headerBytes.slice(0, 4);
+            if (magic[0] !== MAGIC[0] || magic[1] !== MAGIC[1] ||
+                magic[2] !== MAGIC[2] || magic[3] !== MAGIC[3]) {
+                setDecodedMessage('❌ 未发现隐藏信息（魔数不匹配）');
+                setIsProcessing(false);
+                return;
             }
 
-            const decoded = binaryToText(binary);
-            setDecodedMessage(decoded || '未发现隐藏信息');
+            // 读取消息长度
+            const length = (headerBytes[4] << 24) | (headerBytes[5] << 16) |
+                (headerBytes[6] << 8) | headerBytes[7];
+
+            if (length <= 0 || length > 1000000) {
+                setDecodedMessage('❌ 数据损坏或无效');
+                setIsProcessing(false);
+                return;
+            }
+
+            // 读取消息内容
+            const totalBits = (8 + length) * 8; // 头部 + 消息
+            const allBits = extractBits(totalBits);
+            const allBytes = bitsToBytes(allBits);
+            const messageBytes = allBytes.slice(8, 8 + length);
+
+            try {
+                const decoded = bytesToString(messageBytes);
+                setDecodedMessage(decoded || '（空消息）');
+            } catch (e) {
+                setDecodedMessage('❌ 解码失败：' + e.message);
+            }
+
             setIsProcessing(false);
         };
         img.src = image.url;
