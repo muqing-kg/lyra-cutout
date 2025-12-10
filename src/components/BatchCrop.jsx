@@ -183,8 +183,12 @@ const BatchCrop = () => {
         const cropper = cropperRef.current.cropper;
         const imgData = cropper.getImageData(); // 确保此时已拿到新图尺寸
 
-        // 如果有相对位置数据（来自同步），应用它
-        if (img.relativeCropData) {
+        // 如果有绝对裁剪数据（用户手动调整过），优先使用
+        if (img.cropData) {
+            cropper.setData(img.cropData);
+        }
+        // 否则如果有相对位置数据（来自关联同步），计算并使用
+        else if (img.relativeCropData) {
             const newData = {
                 x: img.relativeCropData.x * imgData.naturalWidth,
                 y: img.relativeCropData.y * imgData.naturalHeight,
@@ -192,8 +196,6 @@ const BatchCrop = () => {
                 height: img.relativeCropData.height * imgData.naturalHeight,
             };
             cropper.setData(newData);
-        } else if (img.cropData) {
-            cropper.setData(img.cropData);
         }
     };
 
