@@ -1,28 +1,37 @@
-import { createProxyMiddleware } from 'http-proxy-middleware';
-
+```javascript
 export const config = {
-    api: {
-        bodyParser: false,
-        externalResolver: true,
-    },
+  runtime: 'edge', // 使用 Edge Runtime 获得更好性能
 };
 
-const proxy = createProxyMiddleware({
-    target: 'https://adobeid-na1.services.adobe.com',
-    changeOrigin: true,
-    pathRewrite: {
-        '^/api/adobe-token': '', // Remove /api/adobe-token prefix
-        '^/adobe-token': ''      // Also handle /adobe-token prefix just in case
-    },
-    onProxyReq: (proxyReq) => {
-        // Inject headers to bypass CORS and Referer checks
-        proxyReq.setHeader('Origin', 'https://quick-actions.express.adobe.com');
-        proxyReq.setHeader('Referer', 'https://quick-actions.express.adobe.com/');
-    },
-});
+export default async function handler(req) {
+  const url = new URL(req.url);
+  const targetUrl = 'https://adobeid-na1.services.adobe.com/ims/check/v6/token' + url.search;
 
-export default function handler(req, res) {
-    // If request comes as /adobe-token/..., strip it manually for the middleware matching if needed
-    // Vercel rewrites should handle this, but let's be safe.
-    return proxy(req, res);
+  // 复制请求体
+  const body = req.method === 'POST' ? await req.text() : undefined;
+
+  try {
+    const response = await fetch(targetUrl, {
+      method: req.method,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Origin': 'https://quick-actions.express.adobe.com',
+        'Referer': 'https://quick-actions.express.adobe.com/',
+      },
+      body: body,
+    });
+
+    const data = await response.text();
+    
+    return new Response(data, {
+      status: response.status,
+      headers: {
+        'Content-Type': response.headers.get('Content-Type') || 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  }
 }
+```
