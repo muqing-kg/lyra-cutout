@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { removeBackgroundWithAdobe } from './adobeService.js';
+import BatchCrop from './components/BatchCrop';
 import logoSvg from './logo.svg';
 
 const BRAND = 'Lyra Cutout';
@@ -28,6 +29,7 @@ function formatStatus(processing, files, doneCount) {
 }
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState('remove');
   const [apiKey, setApiKey] = useState('');
   const [backend, setBackend] = useState(BACKENDS.adobe.key);
   // 默认走本地开发代理 /rembg -> http://localhost:7000
@@ -227,7 +229,8 @@ export default function App() {
   };
 
   return (
-    <div className="app-shell">
+  return (
+    <div className={`app-shell ${activeTab === 'crop' ? 'full-width-mode' : ''}`}>
       {/* 左侧：主功能区 */}
       <div className="main-content">
         {/* 页头 */}
@@ -236,181 +239,207 @@ export default function App() {
           <span className="page-badge">Beta</span>
         </div>
 
-        {/* 控制面板 */}
-        <div className="control-panel">
-          <div className="control-section">
-            {/* 模式选择 */}
-            <div className="field">
-              <span className="field-label">处理引擎</span>
-              <div className="mode-selector">
-                <button
-                  type="button"
-                  className={`mode-btn ${backend === BACKENDS.adobe.key ? 'active' : ''}`}
-                  onClick={() => setBackend(BACKENDS.adobe.key)}
-                >
-                  ⭐ Adobe（免费）
-                </button>
-                <button
-                  type="button"
-                  className={`mode-btn ${backend === BACKENDS.removebg.key ? 'active' : ''}`}
-                  onClick={() => setBackend(BACKENDS.removebg.key)}
-                >
-                  remove.bg
-                </button>
-                <button
-                  type="button"
-                  className={`mode-btn ${backend === BACKENDS.local.key ? 'active' : ''}`}
-                  onClick={() => setBackend(BACKENDS.local.key)}
-                >
-                  本地 rembg
-                </button>
+        {/* Tab 导航 */}
+        <div className="tab-nav">
+          <button
+            className={`tab-btn ${activeTab === 'remove' ? 'active' : ''}`}
+            onClick={() => setActiveTab('remove')}
+          >
+            智能抠图
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'crop' ? 'active' : ''}`}
+            onClick={() => setActiveTab('crop')}
+          >
+            批量裁剪
+          </button>
+        </div>
+
+        {/* 智能抠图模块 */}
+        {activeTab === 'remove' && (
+          <>
+            {/* 控制面板 */}
+            <div className="control-panel">
+              <div className="control-section">
+                {/* 模式选择 */}
+                <div className="field">
+                  <span className="field-label">处理引擎</span>
+                  <div className="mode-selector">
+                    <button
+                      type="button"
+                      className={`mode-btn ${backend === BACKENDS.adobe.key ? 'active' : ''}`}
+                      onClick={() => setBackend(BACKENDS.adobe.key)}
+                    >
+                      ⭐ Adobe（免费）
+                    </button>
+                    <button
+                      type="button"
+                      className={`mode-btn ${backend === BACKENDS.removebg.key ? 'active' : ''}`}
+                      onClick={() => setBackend(BACKENDS.removebg.key)}
+                    >
+                      remove.bg
+                    </button>
+                    <button
+                      type="button"
+                      className={`mode-btn ${backend === BACKENDS.local.key ? 'active' : ''}`}
+                      onClick={() => setBackend(BACKENDS.local.key)}
+                    >
+                      本地 rembg
+                    </button>
+                  </div>
+                </div>
+
+                {/* 模式提示/配置 */}
+                <div className="control-row">
+                  {backend === BACKENDS.adobe.key && (
+                    <div className="hint-card success">
+                      <span className="hint-icon">✨</span>
+                      <span>Adobe Sensei AI · 免费高质量 · 无需 API Key</span>
+                    </div>
+                  )}
+
+                  {backend === BACKENDS.removebg.key && (
+                    <div className="field">
+                      <span className="field-label">API Key</span>
+                      <input
+                        id="apiKey"
+                        type="password"
+                        placeholder="输入 remove.bg API Key"
+                        value={apiKey}
+                        onChange={(e) => setApiKey(e.target.value)}
+                      />
+                    </div>
+                  )}
+
+                  {backend === BACKENDS.local.key && (
+                    <div className="field">
+                      <span className="field-label">服务地址</span>
+                      <input
+                        id="localEndpoint"
+                        type="text"
+                        placeholder="例如 http://localhost:7000"
+                        value={localEndpoint}
+                        onChange={(e) => setLocalEndpoint(e.target.value)}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* 模式提示/配置 */}
-            <div className="control-row">
+            {/* 文件选择区 */}
+            <div className="file-zone" onClick={() => document.getElementById('fileInput').click()}>
+              <div className="file-zone-icon">📁</div>
+              <div className="file-zone-text">点击选择图片或拖拽至此</div>
+              <div className="file-zone-hint">支持 PNG、JPG、WebP 等格式，可多选</div>
+              <input
+                id="fileInput"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFileChange}
+                style={{ display: 'none' }}
+              />
+            </div>
+
+            {/* 已选文件列表 */}
+            {files.length > 0 && (
+              <div className="file-list">
+                {files.map((f) => (
+                  <span className="file-pill" key={f.name}>
+                    📄 {f.name}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* 操作按钮 */}
+            <div className="action-bar">
+              <button
+                className="btn-primary"
+                onClick={start}
+                disabled={
+                  processing ||
+                  !files.length ||
+                  (backend === BACKENDS.removebg.key && !apiKey.trim()) ||
+                  (backend === BACKENDS.local.key && !localEndpoint.trim())
+                }
+              >
+                {processing ? '⏳ 处理中…' : '🚀 开始批处理'}
+              </button>
+              <button
+                className="btn-secondary"
+                onClick={downloadAll}
+                disabled={!canZipDownload}
+              >
+                📦 下载全部 ZIP
+              </button>
+              <div className={`status-badge ${processing ? 'processing' : doneCount === files.length && files.length > 0 ? 'done' : ''}`}>
+                {statusText}
+              </div>
+            </div>
+
+            {/* 结果网格 */}
+            {results.length > 0 && (
+              <div className="results-grid">
+                {results.map((item) => (
+                  <ResultCard key={item.name} item={item} />
+                ))}
+              </div>
+            )}
+
+            {/* 提示区 */}
+            <div className="tips-section">
+              · 输出为 <strong>PNG 透明背景</strong>，文件名保持原名<br />
+              · 最多 <strong>10 张并发</strong> 处理，高效快速<br />
               {backend === BACKENDS.adobe.key && (
-                <div className="hint-card success">
-                  <span className="hint-icon">✨</span>
-                  <span>Adobe Sensei AI · 免费高质量 · 无需 API Key</span>
-                </div>
+                <>· Adobe Express 使用 <strong>Adobe Sensei AI</strong>，免费且高质量<br /></>
               )}
-
               {backend === BACKENDS.removebg.key && (
-                <div className="field">
-                  <span className="field-label">API Key</span>
-                  <input
-                    id="apiKey"
-                    type="password"
-                    placeholder="输入 remove.bg API Key"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                  />
-                </div>
+                <>· remove.bg 免费额度有限，付费可获原始分辨率<br /></>
               )}
-
               {backend === BACKENDS.local.key && (
-                <div className="field">
-                  <span className="field-label">服务地址</span>
-                  <input
-                    id="localEndpoint"
-                    type="text"
-                    placeholder="例如 http://localhost:7000"
-                    value={localEndpoint}
-                    onChange={(e) => setLocalEndpoint(e.target.value)}
-                  />
-                </div>
+                <>· 本地 rembg 模式需自行部署服务<br /></>
               )}
             </div>
-          </div>
-        </div>
-
-        {/* 文件选择区 */}
-        <div className="file-zone" onClick={() => document.getElementById('fileInput').click()}>
-          <div className="file-zone-icon">📁</div>
-          <div className="file-zone-text">点击选择图片或拖拽至此</div>
-          <div className="file-zone-hint">支持 PNG、JPG、WebP 等格式，可多选</div>
-          <input
-            id="fileInput"
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleFileChange}
-            style={{ display: 'none' }}
-          />
-        </div>
-
-        {/* 已选文件列表 */}
-        {files.length > 0 && (
-          <div className="file-list">
-            {files.map((f) => (
-              <span className="file-pill" key={f.name}>
-                📄 {f.name}
-              </span>
-            ))}
-          </div>
+          </>
         )}
 
-        {/* 操作按钮 */}
-        <div className="action-bar">
-          <button
-            className="btn-primary"
-            onClick={start}
-            disabled={
-              processing ||
-              !files.length ||
-              (backend === BACKENDS.removebg.key && !apiKey.trim()) ||
-              (backend === BACKENDS.local.key && !localEndpoint.trim())
-            }
-          >
-            {processing ? '⏳ 处理中…' : '🚀 开始批处理'}
-          </button>
-          <button
-            className="btn-secondary"
-            onClick={downloadAll}
-            disabled={!canZipDownload}
-          >
-            📦 下载全部 ZIP
-          </button>
-          <div className={`status-badge ${processing ? 'processing' : doneCount === files.length && files.length > 0 ? 'done' : ''}`}>
-            {statusText}
-          </div>
-        </div>
-
-        {/* 结果网格 */}
-        {results.length > 0 && (
-          <div className="results-grid">
-            {results.map((item) => (
-              <ResultCard key={item.name} item={item} />
-            ))}
-          </div>
-        )}
-
-        {/* 提示区 */}
-        <div className="tips-section">
-          · 输出为 <strong>PNG 透明背景</strong>，文件名保持原名<br />
-          · 最多 <strong>10 张并发</strong> 处理，高效快速<br />
-          {backend === BACKENDS.adobe.key && (
-            <>· Adobe Express 使用 <strong>Adobe Sensei AI</strong>，免费且高质量<br /></>
-          )}
-          {backend === BACKENDS.removebg.key && (
-            <>· remove.bg 免费额度有限，付费可获原始分辨率<br /></>
-          )}
-          {backend === BACKENDS.local.key && (
-            <>· 本地 rembg 模式需自行部署服务<br /></>
-          )}
-        </div>
+        {/* 批量裁剪模块 */}
+        {activeTab === 'crop' && <BatchCrop />}
       </div>
 
-      {/* 右侧：品牌展示区 */}
-      <aside className="brand-panel">
-        <div className="brand-logo">
-          <img src={logoSvg} alt="Lyra Cutout Logo" />
-        </div>
-        <h2 className="brand-title">{BRAND}</h2>
-        <p className="brand-tagline">
-          {BRAND_TAGLINE}<br />
-          批量移除图片背景，一键导出透明 PNG
-        </p>
-        <div className="brand-features">
-          <div className="brand-feature">
-            <span className="brand-feature-icon">⚡</span>
-            <span>10 张并发，极速处理</span>
+      {/* 右侧：品牌展示区 (仅在抠图模式显示) */}
+      {activeTab === 'remove' && (
+        <aside className="brand-panel">
+          <div className="brand-logo">
+            <img src={logoSvg} alt="Lyra Cutout Logo" />
           </div>
-          <div className="brand-feature">
-            <span className="brand-feature-icon">🎨</span>
-            <span>多引擎支持，自由选择</span>
+          <h2 className="brand-title">{BRAND}</h2>
+          <p className="brand-tagline">
+            {BRAND_TAGLINE}<br />
+            批量移除图片背景，一键导出透明 PNG
+          </p>
+          <div className="brand-features">
+            <div className="brand-feature">
+              <span className="brand-feature-icon">⚡</span>
+              <span>10 张并发，极速处理</span>
+            </div>
+            <div className="brand-feature">
+              <span className="brand-feature-icon">🎨</span>
+              <span>多引擎支持，自由选择</span>
+            </div>
+            <div className="brand-feature">
+              <span className="brand-feature-icon">📦</span>
+              <span>批量下载，保留原名</span>
+            </div>
+            <div className="brand-feature">
+              <span className="brand-feature-icon">🔒</span>
+              <span>本地处理，隐私安全</span>
+            </div>
           </div>
-          <div className="brand-feature">
-            <span className="brand-feature-icon">📦</span>
-            <span>批量下载，保留原名</span>
-          </div>
-          <div className="brand-feature">
-            <span className="brand-feature-icon">🔒</span>
-            <span>本地处理，隐私安全</span>
-          </div>
-        </div>
-      </aside>
+        </aside>
+      )}
     </div>
   );
 }

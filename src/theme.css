@@ -641,3 +641,178 @@ input::placeholder {
     justify-content: center;
   }
 }
+/* ========================================
+   Batch Crop Module
+   ======================================== */
+
+.crop-workspace {
+  display: grid;
+  grid-template-columns: 120px 1fr 280px;
+  gap: 20px;
+  height: calc(100vh - 140px); /* 减去头部高度 */
+  width: 100%;
+}
+
+.crop-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.scroll-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.list-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--radius-md);
+  border: 2px solid transparent;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.2s;
+  background: var(--paper-2);
+}
+
+.list-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.list-item.active {
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 2px rgba(195, 154, 58, 0.2);
+}
+
+.del-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  background: rgba(0,0,0,0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.list-item:hover .del-btn {
+  opacity: 1;
+}
+
+.crop-main {
+  background: #2a2a2a; /* 深色背景适合裁剪 */
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.crop-controls {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: var(--ink);
+}
+
+.ratio-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.add-btn {
+  text-align: center;
+  border-style: dashed;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  user-select: none;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.empty-state {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--paper-2);
+}
+
+/* ========================================
+   Tabs Navigation
+   ======================================== */
+.tab-nav {
+  display: flex;
+  gap: 16px;
+  border-bottom: 2px solid var(--line);
+  padding-bottom: 2px;
+  margin-bottom: 24px;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  color: var(--ink);
+}
+
+.tab-btn.active {
+  color: #4a3a25;
+}
+
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--accent-strong);
+  border-radius: 2px;
+}
+
+/* Full width mode for cropping tool */
+.app-shell.full-width-mode {
+  grid-template-columns: 1fr !important;
+  max-width: 100%;
+}
