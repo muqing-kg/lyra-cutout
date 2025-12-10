@@ -1,0 +1,643 @@
+/* ========================================
+   Lyra Cutout - 淡黄质感本子风格
+   保持原有配色 + 新增左右布局
+   ======================================== */
+
+:root {
+  color-scheme: light;
+  /* 原有配色方案 */
+  --paper: #f6f1e3;
+  --paper-2: #f1e7d3;
+  --ink: #3a3125;
+  --muted: #6b5f4b;
+  --accent: #d6b260;
+  --accent-strong: #c39a3a;
+  --border: #e2d6bd;
+  --shadow: rgba(63, 52, 37, 0.18);
+  --line: rgba(127, 109, 80, 0.28);
+
+  /* 状态色 */
+  --success: #10b981;
+  --error: #b42318;
+  --warning: #f59e0b;
+
+  /* 圆角 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  font-family: "Inter", "Noto Sans SC", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: radial-gradient(circle at 20% 20%, var(--paper), #f8f3e6 40%) fixed,
+    linear-gradient(180deg, rgba(0, 0, 0, 0.02) 0, rgba(0, 0, 0, 0) 60%);
+  color: var(--ink);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* ========================================
+   主布局：左右分栏
+   ======================================== */
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  min-height: 100vh;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* 左侧主内容区 */
+.main-content {
+  padding: 32px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 右侧品牌区 */
+.brand-panel {
+  background: linear-gradient(180deg, var(--paper-2) 0%, var(--paper) 100%);
+  border-left: 1px solid var(--border);
+  padding: 48px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.brand-logo {
+  width: 100px;
+  height: 100px;
+  padding: 20px;
+  background: linear-gradient(135deg, #fff4d5, #f7df9e);
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 16px 40px var(--shadow);
+  animation: float 6s ease-in-out infinite;
+}
+
+.brand-logo img {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.brand-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--ink);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.brand-tagline {
+  color: var(--muted);
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.7;
+  max-width: 260px;
+}
+
+.brand-features {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.brand-feature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #fffdf8;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--muted);
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.brand-feature:hover {
+  background: #fff4d5;
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.brand-feature-icon {
+  font-size: 16px;
+}
+
+/* ========================================
+   页头
+   ======================================== */
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+.page-badge {
+  padding: 5px 12px;
+  background: linear-gradient(135deg, #fff3c9, #f7df9e);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #4a3a25;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 4px 12px rgba(195, 154, 58, 0.15);
+}
+
+/* ========================================
+   控制面板
+   ======================================== */
+
+.control-panel {
+  background: linear-gradient(135deg, #faf5e8, var(--paper-2));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  box-shadow: 0 12px 40px var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 笔记本横线效果 */
+.control-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg,
+      transparent,
+      transparent 26px,
+      var(--line) 27px,
+      transparent 28px);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.control-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.control-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+
+/* 模式选择 */
+.mode-selector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mode-btn {
+  padding: 12px 18px;
+  background: #fffdf8;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+}
+
+.mode-btn:hover {
+  background: #fff8e8;
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.mode-btn.active {
+  background: linear-gradient(135deg, #fff3c9, #f7df9e);
+  border-color: var(--accent-strong);
+  color: #4a3a25;
+  box-shadow: 0 8px 24px rgba(195, 154, 58, 0.2);
+}
+
+/* 输入框 */
+input[type="text"],
+input[type="password"] {
+  padding: 12px 14px;
+  background: #fffdf8;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  font-size: 14px;
+  transition: all 0.2s ease;
+  box-shadow: inset 0 1px 0 #ffffff;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+  outline: none;
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 3px rgba(195, 154, 58, 0.18);
+}
+
+input::placeholder {
+  color: var(--muted);
+}
+
+/* 提示卡片 */
+.hint-card {
+  padding: 14px 18px;
+  background: #fffdf8;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--muted);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.hint-card.success {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+.hint-icon {
+  font-size: 18px;
+}
+
+/* ========================================
+   文件选择区
+   ======================================== */
+
+.file-zone {
+  background: #fffdf8;
+  border: 2px dashed var(--accent);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  text-align: center;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.file-zone:hover {
+  border-color: var(--accent-strong);
+  background: #fff8e8;
+  box-shadow: 0 8px 24px rgba(195, 154, 58, 0.12);
+}
+
+.file-zone-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.file-zone-text {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.file-zone-hint {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* 已选文件列表 */
+.file-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.file-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--paper-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+}
+
+/* ========================================
+   操作按钮
+   ======================================== */
+
+.action-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #fbe9bd, #f1d289);
+  border: 1px solid var(--accent-strong);
+  border-radius: var(--radius-md);
+  color: #4a3a25;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 10px 28px rgba(195, 154, 58, 0.22);
+  letter-spacing: 0.01em;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px rgba(195, 154, 58, 0.28);
+  filter: brightness(1.02);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  padding: 14px 22px;
+  background: #fffefb;
+  border: 1px solid var(--accent-strong);
+  border-radius: var(--radius-md);
+  color: #4a3a25;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #fff8e8;
+  box-shadow: 0 8px 22px rgba(195, 154, 58, 0.15);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* 状态显示 */
+.status-badge {
+  padding: 10px 16px;
+  background: #fffdf8;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.status-badge.processing {
+  border-color: var(--warning);
+  color: var(--warning);
+  animation: pulse 2s infinite;
+}
+
+.status-badge.done {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* ========================================
+   结果网格
+   ======================================== */
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.result-card {
+  background: linear-gradient(150deg, #fffaf0, #f5ebd8);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all 0.2s ease;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+.result-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 14px 40px var(--shadow);
+  transform: translateY(-3px);
+}
+
+.result-thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  background: repeating-conic-gradient(var(--paper-2) 0% 25%, var(--paper) 0% 50%) 50% / 16px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.result-thumb-placeholder {
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper-2);
+  color: var(--muted);
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.result-info {
+  padding: 12px;
+}
+
+.result-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 10px;
+  letter-spacing: 0.01em;
+}
+
+.result-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.result-btn {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--paper-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.result-btn:hover {
+  background: linear-gradient(135deg, #fff3c9, #f7df9e);
+  border-color: var(--accent);
+  color: #4a3a25;
+}
+
+.result-error {
+  padding: 8px 10px;
+  background: rgba(180, 35, 24, 0.08);
+  border-radius: var(--radius-sm);
+  color: var(--error);
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+/* ========================================
+   提示区
+   ======================================== */
+
+.tips-section {
+  padding: 16px 20px;
+  background: #fffdf8;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.8;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.tips-section strong {
+  color: var(--accent-strong);
+}
+
+/* ========================================
+   响应式
+   ======================================== */
+
+@media (max-width: 1024px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-panel {
+    display: none;
+  }
+
+  .main-content {
+    padding: 24px 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-title {
+    font-size: 22px;
+  }
+
+  .mode-selector {
+    flex-direction: column;
+  }
+
+  .mode-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .action-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}

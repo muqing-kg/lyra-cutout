@@ -1,0 +1,283 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-light.svg" width="120">
+    <source media="(prefers-color-scheme: light)" srcset="assets/logo-dark.svg" width="120">
+    <img alt="Lyra Cutout Logo" src="assets/logo-dark.svg" width="120">
+  </picture>
+</p>
+
+<h1 align="center">Lyra Cutout</h1>
+
+<p align="center">
+  <strong>AI-Powered Batch Background Removal Tool</strong>
+</p>
+
+<p align="center">
+  <a href="README_CN.md">🇨🇳 中文文档</a> •
+  <a href="#features">Features</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#usage-guide">Usage Guide</a> •
+  <a href="#license">License</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/license-CC--BY--NC--SA--4.0-blue.svg" alt="License">
+  <img src="https://img.shields.io/badge/React-18.3-61dafb.svg" alt="React">
+  <img src="https://img.shields.io/badge/Vite-6.0-646cff.svg" alt="Vite">
+</p>
+
+---
+
+## ⚠️ Disclaimer
+
+**This project is for educational and learning purposes only. Commercial use is strictly prohibited.**
+
+This tool leverages third-party AI services (Adobe Sensei, remove.bg). Please comply with the respective service terms and conditions. The author assumes no responsibility for any misuse or violation of third-party terms.
+
+---
+
+## ✨ Features
+
+- 🎨 **Three Processing Engines** - Adobe Express (Free), remove.bg (API), Local rembg
+- ⚡ **Batch Processing** - Up to 10 images processed concurrently
+- 📦 **Bulk Download** - Download all results as a ZIP file with original filenames
+- 🔒 **Privacy-First** - All processing happens in your browser
+- 🎯 **High Quality** - Powered by Adobe Sensei AI technology
+- 💰 **Free to Use** - Adobe mode requires no API key or registration
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+ and npm
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/petehalverson/lyra-cutout.git
+cd lyra-cutout
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+Open http://localhost:5173 in your browser.
+
+---
+
+## 📖 Usage Guide
+
+Lyra Cutout supports three background removal engines. Choose the one that best fits your needs:
+
+### Option 1: Adobe Express (Recommended) ⭐
+
+**Best for:** Free, high-quality results without any setup
+
+1. Select **"⭐ Adobe (Free)"** mode
+2. Upload your images (supports multiple selection)
+3. Click **"🚀 Start Batch Processing"**
+4. Download individual results or ZIP all
+
+**Pros:**
+- ✅ Completely free
+- ✅ No API key required
+- ✅ No registration needed
+- ✅ High-quality Adobe Sensei AI
+- ✅ Up to 10 concurrent processing
+
+**Cons:**
+- ⚠️ Requires internet connection
+- ⚠️ May have rate limits
+
+---
+
+### Option 2: remove.bg API
+
+**Best for:** Professional use with paid API access
+
+1. Get your API key from [remove.bg](https://www.remove.bg/api)
+2. Select **"remove.bg"** mode
+3. Enter your API key
+4. Upload and process images
+
+**Pros:**
+- ✅ Consistent quality
+- ✅ Full resolution output (with paid plan)
+- ✅ Professional API support
+
+**Cons:**
+- ⚠️ Requires API key
+- ⚠️ Free tier has limited credits
+- ⚠️ API key exposed in browser (use backend proxy for production)
+
+---
+
+### Option 3: Local rembg Server
+
+**Best for:** Offline processing, privacy-sensitive workflows, unlimited usage
+
+This option requires setting up a local rembg server. Here's how:
+
+#### Step 1: Install rembg
+
+```bash
+# Using pip
+pip install rembg[gpu]  # For GPU support
+# or
+pip install rembg        # CPU only
+
+# Using Docker (recommended)
+docker pull danielgatis/rembg
+```
+
+#### Step 2: Start the Server
+
+**Using Python:**
+
+```bash
+# Start rembg server on port 7000
+rembg s --host 0.0.0.0 --port 7000
+```
+
+**Using Docker:**
+
+```bash
+docker run -d -p 7000:5000 danielgatis/rembg s
+```
+
+#### Step 3: Configure in Lyra Cutout
+
+1. Select **"Local rembg"** mode
+2. Enter server address: `http://localhost:7000` (or `/rembg` if using dev proxy)
+3. Upload and process images
+
+**Pros:**
+- ✅ No internet required
+- ✅ Complete privacy
+- ✅ Unlimited processing
+- ✅ No API keys needed
+
+**Cons:**
+- ⚠️ Requires local setup
+- ⚠️ GPU recommended for speed
+- ⚠️ Quality depends on model
+
+#### Advanced: Using GPU Acceleration
+
+For faster processing, use CUDA GPU:
+
+```bash
+# Install with ONNX GPU support
+pip install rembg[gpu] onnxruntime-gpu
+
+# Verify GPU detection
+python -c "import onnxruntime; print(onnxruntime.get_device())"
+```
+
+---
+
+## 🏗️ Project Structure
+
+```
+lyra-cutout/
+├── src/
+│   ├── App.jsx           # Main React component
+│   ├── adobeService.js   # Adobe Sensei API integration
+│   ├── theme.css         # Styling (notepad aesthetic)
+│   ├── logo.svg          # App logo
+│   └── main.jsx          # Entry point
+├── assets/
+│   ├── logo-light.svg    # Logo for dark mode
+│   └── logo-dark.svg     # Logo for light mode
+├── index.html            # HTML template
+├── vite.config.js        # Vite configuration with proxies
+└── package.json
+```
+
+---
+
+## 🔧 Development
+
+### Vite Proxy Configuration
+
+The development server includes proxies for Adobe API and local rembg:
+
+```javascript
+// vite.config.js
+proxy: {
+  '/adobe-api': {
+    target: 'https://sensei.adobe.io',
+    changeOrigin: true,
+    // ... headers for Adobe Express
+  },
+  '/rembg': {
+    target: 'http://localhost:7000',
+    changeOrigin: true,
+  }
+}
+```
+
+### Build for Production
+
+```bash
+npm run build
+npm run preview
+```
+
+> ⚠️ **Note:** Production deployment requires a backend proxy to handle Adobe API requests, as CORS headers cannot be set from the browser.
+
+---
+
+## 📄 License
+
+This project is licensed under the **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0)**.
+
+### You are free to:
+
+- **Share** — copy and redistribute the material in any medium or format
+- **Adapt** — remix, transform, and build upon the material
+
+### Under the following terms:
+
+- **Attribution** — You must give appropriate credit
+- **NonCommercial** — You may not use the material for commercial purposes
+- **ShareAlike** — If you remix, you must distribute under the same license
+
+See [LICENSE](LICENSE) for the full license text.
+
+---
+
+## 🙏 Acknowledgments
+
+- [Adobe Sensei](https://www.adobe.com/sensei.html) - AI background removal technology
+- [remove.bg](https://www.remove.bg) - Professional background removal API
+- [rembg](https://github.com/danielgatis/rembg) - Open source background removal tool
+- [React](https://reactjs.org) & [Vite](https://vitejs.dev) - Frontend framework and build tool
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit Issues and Pull Requests.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+<p align="center">
+  Made with ❤️ for the open source community
+</p>
+
+<p align="center">
+  <strong>⚠️ For Educational Use Only - Not for Commercial Use ⚠️</strong>
+</p>
