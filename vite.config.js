@@ -26,7 +26,7 @@ export default defineConfig({
         target: 'https://www.bing.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/bing-proxy/, ''),
-        selfHandleResponse: true, // 完全接管响应处理
+        followRedirects: false, // 不自动跟随重定向
         configure: (proxy, options) => {
           proxy.on('proxyReq', (proxyReq, req, res) => {
             // 设置必要的请求头
@@ -38,28 +38,6 @@ export default defineConfig({
             const bingCookie = req.headers['x-bing-cookie'];
             if (bingCookie) {
               proxyReq.setHeader('Cookie', bingCookie);
-            }
-          });
-
-          proxy.on('proxyRes', (proxyRes, req, res) => {
-            // 设置 CORS
-            res.setHeader('Access-Control-Allow-Origin', '*');
-            res.setHeader('Access-Control-Allow-Headers', '*');
-
-            // 如果是 302 重定向，拦截并返回 JSON
-            if (proxyRes.statusCode === 302 || proxyRes.statusCode === 301) {
-              const location = proxyRes.headers['location'];
-              let fullLocation = location;
-              if (location && location.startsWith('/')) {
-                fullLocation = `https://www.bing.com${location}`;
-              }
-
-              res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ redirect: fullLocation }));
-            } else {
-              // 其他响应正常透传
-              res.writeHead(proxyRes.statusCode, proxyRes.headers);
-              proxyRes.pipe(res);
             }
           });
         }
