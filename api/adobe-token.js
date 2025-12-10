@@ -1,50 +1,53 @@
-```javascript
+// 使用 Vercel 默认的 Node.js Serverless Function (通常是 AWS Lambda)
+// 相比 Edge Runtime，Node 环境更稳定，且 IP段不同
 export const config = {
-  runtime: 'edge',
+  maxDuration: 10,
 };
 
-export default async function handler(req) {
-  const url = new URL(req.url);
-  // 确保目标 URL 正确
+export default async function handler(req, res) {
+  const url = new URL(req.url, `http://${req.headers.host}`);
   const targetUrl = 'https://adobeid-na1.services.adobe.com/ims/check/v6/token' + url.search;
 
-  const body = req.method === 'POST' ? await req.text() : undefined;
-
-  // 伪装成我们本地开发时的 Chrome 浏览器
-  const FAKE_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+  // 1. 更加逼真的 Chrome 头部伪装
+  const headers = {
+    'Host': 'adobeid-na1.services.adobe.com', // 必须显式指定目标 Host
+    'Content-Type': 'application/x-www-form-urlencoded',
+    'Origin': 'https://quick-actions.express.adobe.com',
+    'Referer': 'https://quick-actions.express.adobe.com/',
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': '*/*',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Sec-Fetch-Dest': 'empty',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Site': 'cross-site',
+    'Connection': 'keep-alive',
+    'Pragma': 'no-cache',
+    'Cache-Control': 'no-cache',
+  };
 
   try {
     const response = await fetch(targetUrl, {
       method: req.method,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Origin': 'https://quick-actions.express.adobe.com',
-        'Referer': 'https://quick-actions.express.adobe.com/',
-        'User-Agent': FAKE_UA, // 关键：欺骗服务器这不是爬虫
-        'Accept': '*/*',
-        'Accept-Language': 'en-US,en;q=0.9',
-      },
-      body: body,
+      headers: headers,
+      body: req.method === 'POST' ? req.body : undefined,
     });
-
-    // 如果上游返回错误，不要直接 500，而是把上游的错误透传回去调试
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Adobe API Error:', response.status, errorText);
-      return new Response(errorText, { status: response.status });
-    }
 
     const data = await response.text();
-    
-    return new Response(data, {
-      status: response.status,
-      headers: {
-        'Content-Type': response.headers.get('Content-Type') || 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-    });
+
+    if (!response.ok) {
+      console.error('Adobe Token Proxy Error:', response.status, data);
+      // 将上游错误透传给前端，而不是直接 500
+      return res.status(response.status).send(data);
+    }
+
+    // 设置跨域头
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Content-Type', 'application/json');
+    return res.status(200).send(data);
+
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message, stack: error.stack }), { status: 500 });
+    console.error('Vercel Proxy Internal Error:', error);
+    return res.status(500).json({ error: error.message, stack: error.stack });
   }
 }
-```
