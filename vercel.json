@@ -1,0 +1,16 @@
+{
+    "rewrite": [
+        {
+            "source": "/adobe-token/(.*)",
+            "destination": "/api/adobe-token"
+        },
+        {
+            "source": "/adobe-api/(.*)",
+            "destination": "/api/adobe-predict"
+        },
+        {
+            "source": "((?!/api/.*).*)",
+            "destination": "/index.html"
+        }
+    ]
+}
