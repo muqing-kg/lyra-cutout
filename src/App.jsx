@@ -3,6 +3,9 @@ import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { removeBackgroundWithAdobe } from './adobeService.js';
 import BatchCrop from './components/BatchCrop';
+import ColorAnalyzer from './components/ColorAnalyzer';
+import SmartCrop from './components/SmartCrop';
+import SmartRename from './components/SmartRename';
 import logoSvg from './logo.svg';
 
 const BRAND = 'Lyra Cutout';
@@ -253,6 +256,24 @@ export default function App() {
           >
             批量裁剪
           </button>
+          <button
+            className={`tab-btn ${activeTab === 'color' ? 'active' : ''}`}
+            onClick={() => setActiveTab('color')}
+          >
+            色彩分析
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'smartcrop' ? 'active' : ''}`}
+            onClick={() => setActiveTab('smartcrop')}
+          >
+            智能构图
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'rename' ? 'active' : ''}`}
+            onClick={() => setActiveTab('rename')}
+          >
+            智能重命名
+          </button>
         </div>
 
         {/* 智能抠图模块 */}
@@ -407,6 +428,15 @@ export default function App() {
 
         {/* 批量裁剪模块 */}
         {activeTab === 'crop' && <BatchCrop />}
+
+        {/* 色彩分析模块 */}
+        {activeTab === 'color' && <ColorAnalyzer />}
+
+        {/* 智能构图模块 */}
+        {activeTab === 'smartcrop' && <SmartCrop />}
+
+        {/* 智能重命名模块 */}
+        {activeTab === 'rename' && <SmartRename />}
       </div>
 
       {/* 右侧：品牌展示区 */}
@@ -416,50 +446,51 @@ export default function App() {
         </div>
         <h2 className="brand-title">{BRAND}</h2>
         <p className="brand-tagline">
-          {activeTab === 'remove' ? (
-            <>{BRAND_TAGLINE}<br />批量移除图片背景，一键导出透明 PNG</>
-          ) : (
-            <>批量图片裁剪工具<br />统一比例，关联调整，高效处理</>
-          )}
+          {activeTab === 'remove' && <>{BRAND_TAGLINE}<br />批量移除图片背景，一键导出透明 PNG</>}
+          {activeTab === 'crop' && <>批量图片裁剪工具<br />统一比例，关联调整，高效处理</>}
+          {activeTab === 'color' && <>色彩和谐分析器<br />提取主色调，分析配色方案</>}
+          {activeTab === 'smartcrop' && <>AI 智能构图裁剪<br />自动识别主体，推荐最佳构图</>}
+          {activeTab === 'rename' && <>批量智能重命名<br />AI 识别内容，自动生成文件名</>}
         </p>
         <div className="brand-features">
-          {activeTab === 'remove' ? (
+          {activeTab === 'remove' && (
             <>
-              <div className="brand-feature">
-                <span className="brand-feature-icon">⚡</span>
-                <span>10 张并发，极速处理</span>
-              </div>
-              <div className="brand-feature">
-                <span className="brand-feature-icon">🎨</span>
-                <span>多引擎支持，自由选择</span>
-              </div>
-              <div className="brand-feature">
-                <span className="brand-feature-icon">📦</span>
-                <span>批量下载，保留原名</span>
-              </div>
-              <div className="brand-feature">
-                <span className="brand-feature-icon">🔒</span>
-                <span>本地处理，隐私安全</span>
-              </div>
+              <div className="brand-feature"><span className="brand-feature-icon">⚡</span><span>10 张并发，极速处理</span></div>
+              <div className="brand-feature"><span className="brand-feature-icon">🎨</span><span>多引擎支持，自由选择</span></div>
+              <div className="brand-feature"><span className="brand-feature-icon">📦</span><span>批量下载，保留原名</span></div>
+              <div className="brand-feature"><span className="brand-feature-icon">🔒</span><span>本地处理，隐私安全</span></div>
             </>
-          ) : (
+          )}
+          {activeTab === 'crop' && (
             <>
-              <div className="brand-feature">
-                <span className="brand-feature-icon">✂️</span>
-                <span>专业预设比例</span>
-              </div>
-              <div className="brand-feature">
-                <span className="brand-feature-icon">🔗</span>
-                <span>关联调整，同步所有图片</span>
-              </div>
-              <div className="brand-feature">
-                <span className="brand-feature-icon">📦</span>
-                <span>打包下载，保留原名</span>
-              </div>
-              <div className="brand-feature">
-                <span className="brand-feature-icon">🔒</span>
-                <span>浏览器本地处理</span>
-              </div>
+              <div className="brand-feature"><span className="brand-feature-icon">✂️</span><span>专业预设比例</span></div>
+              <div className="brand-feature"><span className="brand-feature-icon">🔗</span><span>关联调整，同步所有图片</span></div>
+              <div className="brand-feature"><span className="brand-feature-icon">📦</span><span>打包下载，保留原名</span></div>
+              <div className="brand-feature"><span className="brand-feature-icon">🔒</span><span>浏览器本地处理</span></div>
+            </>
+          )}
+          {activeTab === 'color' && (
+            <>
+              <div className="brand-feature"><span className="brand-feature-icon">🎨</span><span>主色调自动提取</span></div>
+              <div className="brand-feature"><span className="brand-feature-icon">🌈</span><span>配色和谐度评分</span></div>
+              <div className="brand-feature"><span className="brand-feature-icon">📋</span><span>一键复制色值</span></div>
+              <div className="brand-feature"><span className="brand-feature-icon">📤</span><span>导出调色板</span></div>
+            </>
+          )}
+          {activeTab === 'smartcrop' && (
+            <>
+              <div className="brand-feature"><span className="brand-feature-icon">🤖</span><span>AI 主体识别</span></div>
+              <div className="brand-feature"><span className="brand-feature-icon">📐</span><span>黄金分割/三分法</span></div>
+              <div className="brand-feature"><span className="brand-feature-icon">📱</span><span>多尺寸候选</span></div>
+              <div className="brand-feature"><span className="brand-feature-icon">🔒</span><span>完全本地推理</span></div>
+            </>
+          )}
+          {activeTab === 'rename' && (
+            <>
+              <div className="brand-feature"><span className="brand-feature-icon">🧠</span><span>AI 内容识别</span></div>
+              <div className="brand-feature"><span className="brand-feature-icon">📝</span><span>语义化命名</span></div>
+              <div className="brand-feature"><span className="brand-feature-icon">📦</span><span>批量打包下载</span></div>
+              <div className="brand-feature"><span className="brand-feature-icon">🔒</span><span>完全本地推理</span></div>
             </>
           )}
         </div>
