@@ -7,13 +7,19 @@
   color-scheme: light;
   /* 原有配色方案 */
   --paper: #f6f1e3;
+  --paper-1: #faf8f2;
   --paper-2: #f1e7d3;
+  --paper-3: #e8dcc6;
   --ink: #3a3125;
+  --ink-1: #4a3f30;
+  --ink-2: #6b5f4b;
   --muted: #6b5f4b;
   --accent: #d6b260;
   --accent-strong: #c39a3a;
+  --accent-soft: rgba(214, 178, 96, 0.15);
   --border: #e2d6bd;
   --shadow: rgba(63, 52, 37, 0.18);
+  --shadow-sm: 0 1px 3px rgba(63, 52, 37, 0.1);
   --line: rgba(127, 109, 80, 0.28);
 
   /* 状态色 */
@@ -28,6 +34,11 @@
   --radius-xl: 20px;
 
   font-family: "Inter", "Noto Sans SC", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* 移动端优化 */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 *,
@@ -38,12 +49,20 @@
   padding: 0;
 }
 
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
 body {
   background: radial-gradient(circle at 20% 20%, var(--paper), #f8f3e6 40%) fixed,
     linear-gradient(180deg, rgba(0, 0, 0, 0.02) 0, rgba(0, 0, 0, 0) 60%);
   color: var(--ink);
   min-height: 100vh;
   line-height: 1.6;
+  overflow-x: hidden;
+  /* 禁止 iOS 弹性滚动 */
+  overscroll-behavior: none;
 }
 
 #root {
@@ -599,9 +618,31 @@ input::placeholder {
 }
 
 /* ========================================
-   响应式
+   响应式设计
+   断点：
+   - Desktop: > 1200px
+   - Tablet Landscape: 1024px - 1200px
+   - Tablet Portrait: 768px - 1024px
+   - Mobile Landscape: 640px - 768px
+   - Mobile Portrait: < 640px
    ======================================== */
 
+/* Tablet Landscape */
+@media (max-width: 1200px) {
+  .app-shell {
+    grid-template-columns: 1fr 220px;
+  }
+
+  .brand-panel {
+    padding: 24px 16px;
+  }
+
+  .brand-title {
+    font-size: 1.3rem;
+  }
+}
+
+/* Tablet Portrait */
 @media (max-width: 1024px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -612,33 +653,423 @@ input::placeholder {
   }
 
   .main-content {
-    padding: 24px 20px;
+    padding: 20px 16px;
+    max-width: 100%;
+  }
+
+  /* Tab 导航优化 */
+  .tab-nav {
+    gap: 6px;
+    padding-bottom: 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .tab-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  /* 控制面板优化 */
+  .control-panel {
+    padding: 12px;
+  }
+
+  .control-section {
+    gap: 12px;
+  }
+
+  .field {
+    flex-wrap: wrap;
+  }
+
+  .field-label {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+
+  /* 网格布局优化 */
+  .result-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  /* 各模块的两列布局改为单列 */
+  .analyzer-content,
+  .smart-crop-content,
+  .exif-layout,
+  .stitcher-layout,
+  .collage-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .crop-workspace {
+    grid-template-columns: 80px 1fr;
+    height: auto;
+    min-height: 400px;
   }
 }
 
-@media (max-width: 640px) {
+/* Mobile Landscape */
+@media (max-width: 768px) {
   .page-title {
-    font-size: 22px;
+    font-size: 20px;
+    margin-bottom: 16px;
   }
 
+  /* Tab 按钮更紧凑 */
+  .tab-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  /* 模式选择器 */
   .mode-selector {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .mode-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    flex: 1 1 auto;
+    min-width: 80px;
+    text-align: center;
+  }
+
+  /* 表格优化 */
+  .compress-table,
+  .resize-table,
+  .rename-table {
+    font-size: 0.8rem;
+  }
+
+  .compress-table th,
+  .compress-table td,
+  .resize-table th,
+  .resize-table td,
+  .rename-table th,
+  .rename-table td {
+    padding: 8px 6px;
+  }
+
+  /* 水印网格 */
+  .watermark-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+  }
+
+  /* 输入框 */
+  .input-field {
+    min-width: 100px;
+    max-width: 100%;
+  }
+
+  /* 空状态 */
+  .file-zone {
+    padding: 40px 20px;
+  }
+
+  .file-zone-icon {
+    font-size: 2.5rem;
+  }
+
+  .file-zone-text {
+    font-size: 1rem;
+  }
+}
+
+/* Mobile Portrait */
+@media (max-width: 640px) {
+  body {
+    padding: 0;
+  }
+
+  .main-content {
+    padding: 16px 12px;
+    border-radius: 0;
+  }
+
+  .page-title {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  /* Tab 导航改为可滚动 */
+  .tab-nav {
+    flex-wrap: nowrap;
+    gap: 4px;
+    padding: 8px 0;
+    margin: 0 -12px 16px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .tab-btn {
+    padding: 8px 10px;
+    font-size: 11px;
+    border-radius: 16px;
+  }
+
+  /* 控制面板垂直排列 */
+  .control-panel {
+    padding: 12px;
+  }
+
+  .control-section {
     flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .field {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .field-label {
+    font-size: 12px;
+  }
+
+  /* 模式选择器垂直 */
+  .mode-selector {
+    width: 100%;
   }
 
   .mode-btn {
     width: 100%;
-    text-align: center;
+    justify-content: center;
   }
 
+  /* 按钮全宽 */
   .action-bar {
     flex-direction: column;
     align-items: stretch;
+    gap: 10px;
   }
 
   .btn-primary,
   .btn-secondary {
     width: 100%;
     justify-content: center;
+    padding: 12px 16px;
+  }
+
+  .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .actions button {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+
+  /* 结果网格 */
+  .result-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .result-card {
+    border-radius: var(--radius-md);
+  }
+
+  .result-thumb {
+    height: 100px;
+  }
+
+  .result-name {
+    font-size: 11px;
+    padding: 6px;
+  }
+
+  /* 批量裁剪 */
+  .crop-workspace {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .crop-sidebar {
+    flex-direction: row;
+    overflow-x: auto;
+    height: auto;
+    padding: 8px;
+  }
+
+  .scroll-list {
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .list-item {
+    width: 60px;
+    height: 60px;
+    flex-shrink: 0;
+  }
+
+  /* 图片拼接 */
+  .stitcher-layout {
+    gap: 12px;
+  }
+
+  .stitcher-list {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .stitcher-item {
+    padding: 6px;
+    gap: 8px;
+  }
+
+  .stitcher-thumb {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* 拼贴画 */
+  .collage-layout {
+    gap: 12px;
+  }
+
+  .collage-list {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 6px;
+  }
+
+  .collage-item {
+    width: 60px;
+    height: 60px;
+    flex-shrink: 0;
+  }
+
+  /* 格式转换 */
+  .converter-item {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .converter-thumb {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* EXIF */
+  .exif-preview img {
+    max-height: 200px;
+  }
+
+  .exif-table td {
+    padding: 6px;
+    font-size: 0.85rem;
+  }
+
+  /* 对比滑块 */
+  .compare-container {
+    max-width: 100%;
+  }
+
+  /* 马赛克 */
+  .mosaic-canvas {
+    max-height: 300px;
+  }
+
+  /* 隐写术 */
+  .stego-preview img {
+    max-height: 200px;
+  }
+
+  /* 隐藏某些表格列 */
+  .compress-table th:nth-child(3),
+  .compress-table td:nth-child(3),
+  .resize-table th:nth-child(3),
+  .resize-table td:nth-child(3) {
+    display: none;
+  }
+}
+
+/* 超小屏幕 (iPhone SE 等) */
+@media (max-width: 375px) {
+  .main-content {
+    padding: 12px 8px;
+  }
+
+  .page-title {
+    font-size: 16px;
+  }
+
+  .tab-btn {
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  .result-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .result-thumb {
+    height: 80px;
+  }
+
+  .file-zone {
+    padding: 30px 16px;
+  }
+
+  .file-zone-icon {
+    font-size: 2rem;
+  }
+
+  .file-zone-text {
+    font-size: 0.9rem;
+  }
+
+  .file-zone-hint {
+    font-size: 0.75rem;
+  }
+}
+
+/* 横屏手机优化 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .main-content {
+    padding: 12px 16px;
+  }
+
+  .page-title {
+    margin-bottom: 12px;
+  }
+
+  .tab-nav {
+    margin-bottom: 12px;
+  }
+
+  .control-panel {
+    padding: 8px 12px;
+  }
+
+  .file-zone {
+    padding: 20px;
+  }
+
+  .file-zone-icon {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
   }
 }
 
