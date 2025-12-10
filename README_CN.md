@@ -14,7 +14,7 @@
 
 <p align="center">
   <a href="README.md">🇺🇸 English</a> •
-  <a href="https://lyracutouter.vercel.app/" target="_blank">🌟 在线演示</a> •
+  <a href="https://lyra-cutout.pages.dev/" target="_blank">🌟 在线演示</a> •
   <a href="#功能特点">功能特点</a> •
   <a href="#快速开始">快速开始</a> •
   <a href="#使用指南">使用指南</a> •
@@ -25,7 +25,7 @@
   <img src="https://img.shields.io/badge/license-CC--BY--NC--SA--4.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/React-18.3-61dafb.svg" alt="React">
   <img src="https://img.shields.io/badge/Vite-6.0-646cff.svg" alt="Vite">
-  <a href="https://lyracutouter.vercel.app/"><img src="https://img.shields.io/website?url=https%3A%2F%2Flyracutouter.vercel.app%2F&up_message=online&down_message=offline&label=Demo" alt="Website Status"></a>
+  <a href="https://lyra-cutout.pages.dev/"><img src="https://img.shields.io/website?url=https%3A%2F%2Flyra-cutout.pages.dev%2F&up_message=online&down_message=offline&label=Demo" alt="Website Status"></a>
 </p>
 
 <p align="center">
