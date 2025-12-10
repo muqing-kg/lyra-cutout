@@ -29,7 +29,7 @@
 </p>
 
 <p align="center">
-  <a href="https://vercel.com/new/clone?repository-url=https://github.com/petehsu/lyra-cutout"><img src="https://vercel.com/button" alt="Deploy with Vercel"></a>
+  <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/petehsu/lyra-cutout"><img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare Workers" height="30"></a>
 </p>
 
 ---
