@@ -29,7 +29,7 @@
 </p>
 
 <p align="center">
-  <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/petehsu/lyra-cutout"><img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare Workers" height="30"></a>
+  <a href="https://deploy.cloudflare.com/?url=https://github.com/petehsu/lyra-cutout"><img src="https://deploy.cloudflare.com/button" alt="Deploy to Cloudflare Pages" height="30"></a>
 </p>
 
 ---
