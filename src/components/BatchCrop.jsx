@@ -112,9 +112,10 @@ const BatchCrop = () => {
         });
     };
 
-    // 使用 Ref 追踪最新的 currentImage 和 isSync，避免闭包陷阱
+    // 使用 Ref 追踪最新的状态，避免闭包陷阱
     const currentImageRef = useRef(currentImage);
     const isSyncRef = useRef(isSync);
+    const selectedIndexRef = useRef(selectedIndex);
 
     useEffect(() => {
         currentImageRef.current = currentImage;
@@ -123,6 +124,10 @@ const BatchCrop = () => {
     useEffect(() => {
         isSyncRef.current = isSync;
     }, [isSync]);
+
+    useEffect(() => {
+        selectedIndexRef.current = selectedIndex;
+    }, [selectedIndex]);
 
     // 强制应用比例变化
     useEffect(() => {
@@ -136,12 +141,13 @@ const BatchCrop = () => {
         if (!currentImage || !cropperRef.current) return;
         const cropper = cropperRef.current.cropper;
         const data = cropper.getData();
+        const curIndex = selectedIndexRef.current; // 获取最新的 index
 
         // 更新当前图片数据
-        updateImage(selectedIndex, { cropData: data });
+        updateImage(curIndex, { cropData: data });
 
         // 关联同步逻辑：位置同步
-        // 必须使用 ref 读取最新状态，否则闭包会导致 isSync 永远为 true
+        // 必须使用 ref 读取最新状态
         if (isSyncRef.current) {
             const imgData = cropper.getImageData();
             // 防御性检查：确保有尺寸数据
@@ -284,6 +290,7 @@ const BatchCrop = () => {
             <div className="crop-main">
                 {currentImage ? (
                     <Cropper
+                        key={currentImage.id}
                         src={currentImage.url}
                         style={{ height: '100%', width: '100%' }}
                         aspectRatio={currentImage.aspectRatio} // 响应式比例
