@@ -472,8 +472,12 @@ const Steganography = () => {
                 // 验证人脸
                 if (flags & AUTH_FACE) {
                     const templateLen = payload[offset++];
+                    console.log('存储的人脸模板长度:', templateLen, '偏移:', offset - 1);
                     const storedTemplate = payload.slice(offset, offset + templateLen);
                     offset += templateLen;
+
+                    console.log('storedTemplate 前5字节:', Array.from(storedTemplate.slice(0, 5)));
+                    console.log('faceTemplate 前5字节:', faceTemplate ? Array.from(faceTemplate.slice(0, 5)) : 'null');
 
                     const similarity = compareFaceFeatures(storedTemplate, faceTemplate);
                     if (similarity < 0.70) {
