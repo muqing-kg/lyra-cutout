@@ -2,14 +2,14 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/logo-light.svg" width="120">
     <source media="(prefers-color-scheme: light)" srcset="assets/logo-dark.svg" width="120">
-    <img alt="Lyra Cutout Logo" src="assets/logo-dark.svg" width="120">
+    <img alt="Lyra Image Logo" src="assets/logo-dark.svg" width="120">
   </picture>
 </p>
 
-<h1 align="center">Lyra Cutout</h1>
+<h1 align="center">Lyra Image</h1>
 
 <p align="center">
-  <strong>AI 智能批量抠图工具</strong>
+  <strong>一站式智能图片处理平台</strong>
 </p>
 
 <p align="center">
@@ -25,6 +25,7 @@
   <img src="https://img.shields.io/badge/license-CC--BY--NC--SA--4.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/React-18.3-61dafb.svg?logo=react&logoColor=white" alt="React">
   <img src="https://img.shields.io/badge/Vite-6.0-646cff.svg?logo=vite&logoColor=white" alt="Vite">
+  <img src="https://img.shields.io/badge/TensorFlow.js-AI-FF6F00.svg?logo=tensorflow&logoColor=white" alt="TensorFlow.js">
 </p>
 
 <p align="center">
@@ -50,14 +51,29 @@
 
 ## ✨ 功能特点
 
-- 🎨 **多种引擎**：
-  - **Adobe Express**：利用 Adobe Sensei AI 提供商业级的抠图效果（推荐）。
-  - **Remove.bg**：支持云端 API，需自行提供 Key。
-  - **本地 Rembg**：支持连接本地运行的开源 `rembg` 服务，完全隐私。
-- ⚡ **批量处理** - 最多 10 张图片同时并发处理
-- 📦 **批量下载** - 一键打包下载所有结果，保留原始文件名
-- 🔒 **隐私优先** - 所有处理都在浏览器中完成
-- 🎯 **高质量** - 采用 Adobe Sensei AI 技术
+### 🎨 核心工具
+- **智能抠图** - 支持 Adobe Express、remove.bg、本地 rembg 三种引擎
+- **批量裁剪** - 专业预设比例，关联调整
+- **AI 智能构图** - TensorFlow.js 主体检测，构图建议
+- **色彩和谐分析** - 提取主色调，配色评分
+
+### 🛠️ 图片工具箱
+- **长图拼接** - 将多张截图拼成一张长图
+- **隐私马赛克** - 框选区域添加马赛克/模糊
+- **批量水印** - 文字/图片水印，自定义位置
+- **图片压缩** - 调整质量，减小文件体积
+- **格式转换** - PNG/JPG/WebP 互转
+- **尺寸调整** - 批量缩放，保持比例
+- **EXIF 查看器** - 查看/清除图片元数据
+- **图片对比** - Before/After 滑动对比
+- **拼贴画** - 九宫格等多种布局
+- **图片隐写** - 在像素中隐藏秘密信息
+
+### ⚡ 平台特点
+- 🆓 **完全免费** - 无需 API Key，无需注册
+- 🔒 **隐私优先** - 所有处理都在浏览器本地完成
+- 📱 **响应式设计** - 支持桌面、平板、手机
+- ⚡ **极速处理** - WebAssembly/WebGL 加速的 AI
 - 💰 **免费使用** - Adobe 模式无需 API 密钥或注册
 
 ## ✂️ 批量裁剪工具 (New)

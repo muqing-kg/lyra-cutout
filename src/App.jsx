@@ -18,8 +18,8 @@ import Collage from './components/Collage';
 import Steganography from './components/Steganography';
 import logoSvg from './logo.svg';
 
-const BRAND = 'Lyra Cutout';
-const BRAND_TAGLINE = 'AI 智能抠图工具';
+const BRAND = 'Lyra Image';
+const BRAND_TAGLINE = '一站式智能图片处理平台';
 const BACKENDS = {
   adobe: { key: 'adobe', label: 'Adobe Express（免费）' },
   removebg: { key: 'removebg', label: 'remove.bg 云端' },

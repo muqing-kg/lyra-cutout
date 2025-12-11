@@ -2,14 +2,14 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/logo-light.svg" width="120">
     <source media="(prefers-color-scheme: light)" srcset="assets/logo-dark.svg" width="120">
-    <img alt="Lyra Cutout Logo" src="assets/logo-dark.svg" width="120">
+    <img alt="Lyra Image Logo" src="assets/logo-dark.svg" width="120">
   </picture>
 </p>
 
-<h1 align="center">Lyra Cutout</h1>
+<h1 align="center">Lyra Image</h1>
 
 <p align="center">
-  <strong>AI-Powered Batch Background Removal Tool</strong>
+  <strong>All-in-One AI-Powered Image Processing Platform</strong>
 </p>
 
 <p align="center">
@@ -25,6 +25,7 @@
   <img src="https://img.shields.io/badge/license-CC--BY--NC--SA--4.0-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/React-18.3-61dafb.svg?logo=react&logoColor=white" alt="React">
   <img src="https://img.shields.io/badge/Vite-6.0-646cff.svg?logo=vite&logoColor=white" alt="Vite">
+  <img src="https://img.shields.io/badge/TensorFlow.js-AI-FF6F00.svg?logo=tensorflow&logoColor=white" alt="TensorFlow.js">
 </p>
 
 <p align="center">
@@ -50,12 +51,29 @@ This tool leverages third-party AI services (Adobe Sensei, remove.bg). Please co
 
 ## ✨ Features
 
-- 🎨 **Three Processing Engines** - Adobe Express (Free), remove.bg (API), Local rembg
-- ⚡ **Batch Processing** - Up to 10 images processed concurrently
-- 📦 **Bulk Download** - Download all results as a ZIP file with original filenames
-- 🔒 **Privacy-First** - All processing happens in your browser
-- 🎯 **High Quality** - Powered by Adobe Sensei AI technology
-- 💰 **Free to Use** - Adobe mode requires no API key or registration
+### 🎨 Core Tools
+- **Smart Background Removal** - Adobe Express, remove.bg, Local rembg
+- **Batch Cropping** - Professional aspect ratios, linked editing
+- **AI Smart Crop** - TensorFlow.js subject detection, composition suggestions
+- **Color Harmony Analyzer** - Extract palettes, harmony scoring
+
+### 🛠️ Image Utilities
+- **Image Stitcher** - Combine screenshots into long images
+- **Privacy Mosaic** - Blur/pixelate sensitive areas
+- **Batch Watermark** - Text/image watermarks with positioning
+- **Image Compressor** - Reduce file size with quality control
+- **Format Converter** - PNG/JPG/WebP conversion
+- **Image Resizer** - Batch resize with aspect ratio lock
+- **EXIF Viewer** - View and strip metadata
+- **Before/After Slider** - Compare two images
+- **Collage Maker** - Grid layouts (2x2, 3x3, etc.)
+- **Steganography** - Hide secret messages in images
+
+### ⚡ Platform Highlights
+- 🆓 **100% Free** - No API keys, no registration required
+- 🔒 **Privacy-First** - All processing in browser, no uploads
+- 📱 **Responsive** - Works on desktop, tablet, and mobile
+- ⚡ **Fast** - WebAssembly/WebGL accelerated AI
 
 ## ✂️ Batch Cropping Tool (New)
 
