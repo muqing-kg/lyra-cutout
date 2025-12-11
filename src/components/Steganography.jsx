@@ -559,10 +559,18 @@ const Steganography = () => {
             </div>
 
             {showCamera && (
-                <div style={{ background: 'var(--paper-2)', borderRadius: 12, padding: 16, marginBottom: 16, textAlign: 'center' }}>
-                    <video ref={videoRef} style={{ width: 320, height: 240, borderRadius: 8, transform: 'scaleX(-1)' }} autoPlay muted playsInline />
-                    <div style={{ marginTop: 8 }}>
-                        <button className="btn-secondary" onClick={stopCamera}>❌ 关闭</button>
+                <div style={{ background: 'var(--paper-2)', borderRadius: 12, padding: 16, marginBottom: 16, textAlign: 'center', border: '2px solid var(--border)' }}>
+                    <div style={{ background: '#000', borderRadius: 8, overflow: 'hidden', display: 'inline-block' }}>
+                        <video
+                            ref={videoRef}
+                            style={{ width: 320, height: 240, display: 'block', transform: 'scaleX(-1)' }}
+                            autoPlay
+                            muted
+                            playsInline
+                        />
+                    </div>
+                    <div style={{ marginTop: 12 }}>
+                        <button className="btn-secondary" onClick={stopCamera}>❌ 关闭摄像头</button>
                     </div>
                 </div>
             )}
