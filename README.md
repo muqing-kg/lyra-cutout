@@ -67,7 +67,7 @@ This tool leverages third-party AI services (Adobe Sensei, remove.bg). Please co
 - **EXIF Viewer** - View and strip metadata
 - **Before/After Slider** - Compare two images
 - **Collage Maker** - Grid layouts (2x2, 3x3, etc.)
-- **Steganography** - Hide secret messages in images
+- **Steganography** - Hide secret messages in images with multi-factor authentication
 
 ### ⚡ Platform Highlights
 - 🆓 **100% Free** - No API keys, no registration required
@@ -254,6 +254,154 @@ The final transparent image is composited entirely in the browser using the Canv
 4. Export as PNG Blob.
 
 This approach leverages Adobe's powerful AI while keeping image processing client-side (via proxy), ensuring privacy and speed.
+
+---
+
+## 🔐 Steganography Technical Implementation
+
+The steganography module implements a multi-layered security system for hiding secret messages within PNG images.
+
+### 1. LSB (Least Significant Bit) Encoding
+
+The core hiding technique uses LSB steganography:
+
+```
+Original Pixel:  RGB(150, 200, 100) = Binary: 10010110, 11001000, 01100100
+Hidden Bit:      1
+Modified Pixel:  RGB(151, 200, 100) = Binary: 10010111, 11001000, 01100100
+                                              ^^^^^^^^ (1 bit changed)
+```
+
+- Only the **Red channel's least significant bit** is modified
+- Human eye cannot detect a 1/256 color change
+- Each pixel stores 1 bit; 8 pixels = 1 byte
+- Capacity: ~10KB text per 1MP image
+
+### 2. Data Structure
+
+```
+┌──────────────┬───────────┬──────────────┬─────────────┐
+│  Magic (4B)  │ Flags (1B)│ Length (4B)  │  Payload    │
+│    "LYRA"    │  0b00000  │   N bytes    │   N bytes   │
+└──────────────┴───────────┴──────────────┴─────────────┘
+```
+
+**Authentication Flags (Bitmask):**
+| Bit | Flag | Description |
+|-----|------|-------------|
+| 0 | `AUTH_PASSWORD` | AES-256-GCM encryption enabled |
+| 1 | `AUTH_2FA` | TOTP verification required |
+| 2 | `AUTH_FACE` | Face recognition required |
+
+### 3. AES-256-GCM Encryption
+
+When password protection is enabled:
+
+```javascript
+// Key Derivation (PBKDF2)
+Salt: 16 random bytes
+Iterations: 100,000
+Hash: SHA-256
+Output: 256-bit AES key
+
+// Encryption
+Algorithm: AES-256-GCM
+IV: 12 random bytes
+Auth Tag: 16 bytes (built into ciphertext)
+
+// Stored Format:
+[Salt 16B][IV 12B][Ciphertext + AuthTag]
+```
+
+**Security Properties:**
+- ✅ Authenticated encryption (tamper detection)
+- ✅ Unique key per encryption (random salt)
+- ✅ Brute-force resistant (100K PBKDF2 iterations)
+
+### 4. TOTP Two-Factor Authentication
+
+Compatible with Google Authenticator, Microsoft Authenticator, Authy, etc.
+
+```
+TOTP Generation (RFC 6238):
+1. Secret: 160-bit random → Base32 encoded (32 chars)
+2. Time Step: floor(Unix_Time / 30)
+3. HMAC: HMAC-SHA1(secret, time_step)
+4. Truncation: Dynamic offset extraction
+5. Output: 6-digit code (modulo 1,000,000)
+```
+
+**Verification Window:** ±30 seconds (allows 1 step drift)
+
+**Data Storage:**
+```
+[Secret Length 1B][Base32 Secret ~32B][Encrypted Message]
+```
+
+### 5. Face Recognition Authentication
+
+A lightweight client-side face verification using histogram-based features.
+
+**Feature Extraction:**
+```
+Image (160×120 grayscale)
+       ↓
+Split into 4×4 = 16 regions
+       ↓
+Each region: 8-bin grayscale histogram
+       ↓
+Normalize to 0-255
+       ↓
+Output: 128-dimensional feature vector
+```
+
+**Comparison (Cosine Similarity):**
+```
+similarity = (A · B) / (||A|| × ||B||)
+
+Threshold: 0.70 (70% similarity required)
+```
+
+**Security Notes:**
+- 🔒 Face template stored encrypted within image
+- 🔒 No cloud upload, all processing in browser
+- ⚠️ Not as secure as professional face recognition
+- ⚠️ Sensitive to lighting/angle changes
+
+### 6. Combined Authentication Modes
+
+All three factors can be combined:
+
+| Mode | Security | Use Case |
+|------|----------|----------|
+| Password only | ⭐⭐ | Quick protection |
+| 2FA only | ⭐⭐ | Mobile-based auth |
+| Face only | ⭐⭐ | Biometric only |
+| Password + 2FA | ⭐⭐⭐ | Standard 2FA |
+| Password + Face | ⭐⭐⭐ | Biometric + password |
+| 2FA + Face | ⭐⭐⭐ | Passwordless 2FA |
+| All three | ⭐⭐⭐⭐ | Maximum security |
+
+### 7. Decryption Flow
+
+```
+Read Magic Header → Validate "LYRA"
+Read Flags → Determine required auth factors
+Read Length → Extract payload
+
+If PASSWORD flag:
+  └→ Prompt for password → PBKDF2 → AES-GCM Decrypt
+
+If 2FA flag:
+  └→ Extract TOTP secret from payload
+  └→ Prompt for 6-digit code → Verify TOTP
+
+If FACE flag:
+  └→ Extract face template from payload
+  └→ Capture live face → Compare similarity
+
+All verified → Display hidden message
+```
 
 ---
 

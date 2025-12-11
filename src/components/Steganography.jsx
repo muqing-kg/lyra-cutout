@@ -90,14 +90,12 @@ const Steganography = () => {
             }
         }
 
-        console.log('提取特征数量:', features.length); // 应该是 128
         return new Uint8Array(features);
     };
 
     // 使用余弦相似度比较（对幅度变化更鲁棒）
     const compareFaceFeatures = (template, current) => {
         // 调试：检查长度
-        console.log('人脸特征比较:', {
             templateLen: template?.length,
             currentLen: current?.length
         });
@@ -121,7 +119,6 @@ const Steganography = () => {
         if (normA === 0 || normB === 0) return 0;
 
         const similarity = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-        console.log('余弦相似度:', similarity);
         return similarity;
     };
 
@@ -331,7 +328,6 @@ const Steganography = () => {
 
                 // 人脸: 存储特征模板
                 if (flags & AUTH_FACE) {
-                    console.log('加密时 faceTemplate:', faceTemplate?.length, faceTemplate?.slice(0, 5));
                     if (!faceTemplate || faceTemplate.length === 0) {
                         alert('人脸模板为空，请重新录入');
                         setIsProcessing(false);
@@ -339,7 +335,6 @@ const Steganography = () => {
                     }
                     parts.push(faceTemplate.length);
                     parts.push(...faceTemplate);
-                    console.log('存储人脸模板后 parts 长度:', parts.length);
                 }
 
                 // 消息内容
@@ -478,12 +473,9 @@ const Steganography = () => {
                 // 验证人脸
                 if (flags & AUTH_FACE) {
                     const templateLen = payload[offset++];
-                    console.log('存储的人脸模板长度:', templateLen, '偏移:', offset - 1);
                     const storedTemplate = payload.slice(offset, offset + templateLen);
                     offset += templateLen;
 
-                    console.log('storedTemplate 前5字节:', Array.from(storedTemplate.slice(0, 5)));
-                    console.log('faceTemplate 前5字节:', faceTemplate ? Array.from(faceTemplate.slice(0, 5)) : 'null');
 
                     const similarity = compareFaceFeatures(storedTemplate, faceTemplate);
                     if (similarity < 0.70) {
