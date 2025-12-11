@@ -332,8 +332,15 @@ const Steganography = () => {
 
                 // 人脸: 存储特征模板
                 if (flags & AUTH_FACE) {
+                    console.log('加密时 faceTemplate:', faceTemplate?.length, faceTemplate?.slice(0, 5));
+                    if (!faceTemplate || faceTemplate.length === 0) {
+                        alert('人脸模板为空，请重新录入');
+                        setIsProcessing(false);
+                        return;
+                    }
                     parts.push(faceTemplate.length);
                     parts.push(...faceTemplate);
+                    console.log('存储人脸模板后 parts 长度:', parts.length);
                 }
 
                 // 消息内容
