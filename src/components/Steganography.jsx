@@ -57,41 +57,40 @@ const Steganography = () => {
     // ==================== 人脸检测 ====================
 
     // 使用灰度直方图作为特征（更稳定）
+    // 4x4=16个区域，每个8 bins = 128 特征（避免256溢出）
     const extractFaceFeatures = async (imageData) => {
         const data = imageData.data;
         const width = imageData.width;
         const height = imageData.height;
 
-        // 将图像分成 4x4 = 16 个区域，每个区域计算 16 bin 直方图
-        // 总共 16 * 16 = 256 个特征值
         const features = [];
         const regionW = Math.floor(width / 4);
         const regionH = Math.floor(height / 4);
 
         for (let ry = 0; ry < 4; ry++) {
             for (let rx = 0; rx < 4; rx++) {
-                // 16 bin 直方图
-                const hist = new Array(16).fill(0);
+                // 8 bin 直方图（减少到8以保持总数128）
+                const hist = new Array(8).fill(0);
                 let pixelCount = 0;
 
                 for (let y = ry * regionH; y < (ry + 1) * regionH; y++) {
                     for (let x = rx * regionW; x < (rx + 1) * regionW; x++) {
                         const idx = (y * width + x) * 4;
-                        // 灰度值
-                        const gray = data[idx]; // 已经是灰度
-                        const bin = Math.floor(gray / 16); // 0-15
-                        hist[Math.min(bin, 15)]++;
+                        const gray = data[idx];
+                        const bin = Math.floor(gray / 32); // 0-7
+                        hist[Math.min(bin, 7)]++;
                         pixelCount++;
                     }
                 }
 
                 // 归一化到 0-255
-                for (let i = 0; i < 16; i++) {
+                for (let i = 0; i < 8; i++) {
                     features.push(Math.round((hist[i] / pixelCount) * 255));
                 }
             }
         }
 
+        console.log('提取特征数量:', features.length); // 应该是 128
         return new Uint8Array(features);
     };
 
