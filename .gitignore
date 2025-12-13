@@ -45,3 +45,7 @@ output.png
 # Temporary files
 *.tmp
 *.temp
+.idea/
+build/
+node_modules/
+__pycache__/
