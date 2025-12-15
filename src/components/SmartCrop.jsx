@@ -288,12 +288,13 @@ const SmartCrop = () => {
                             <canvas ref={canvasRef} className="preview-canvas" />
                         </>
                     ) : (
-                        <div className="empty-state file-zone">
+                        <div className="empty-state file-zone" onClick={() => document.getElementById('smartCropInput').click()}>
                             <div className="file-zone-icon">📐</div>
                             <div className="file-zone-text">智能构图裁剪</div>
                             <div className="file-zone-hint">
                                 {isLoading ? '正在加载 AI 模型...' : 'AI 自动识别主体，推荐最佳构图'}
                             </div>
+                            <input id="smartCropInput" type="file" accept="image/*" onChange={handleUpload} hidden />
                         </div>
                     )}
                 </div>

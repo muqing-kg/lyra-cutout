@@ -95,10 +95,6 @@ const Steganography = () => {
 
     // 使用余弦相似度比较（对幅度变化更鲁棒）
     const compareFaceFeatures = (template, current) => {
-        // 调试：检查长度
-            templateLen: template?.length,
-            currentLen: current?.length
-        });
 
         if (!template || !current) return 0;
 
@@ -654,10 +650,11 @@ const Steganography = () => {
 
             <div className="stego-content">
                 {!image ? (
-                    <div className="empty-state file-zone">
+                    <div className="empty-state file-zone" onClick={() => document.getElementById('stegoInput').click()}>
                         <div className="file-zone-icon">🔐</div>
                         <div className="file-zone-text">图片隐写术</div>
                         <div className="file-zone-hint">密码 + 2FA + 人脸 任意组合</div>
+                        <input id="stegoInput" type="file" accept="image/png,image/jpeg" onChange={handleUpload} hidden />
                     </div>
                 ) : (
                     <div className="stego-layout">

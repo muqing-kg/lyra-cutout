@@ -17,59 +17,75 @@ const CLIENT_ID = 'quickactions_hz_webapp';
 // 缓存 token，避免重复请求
 let cachedToken = null;
 let tokenExpiry = 0;
+let inFlightTokenPromise = null;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+async function withRetry(fn, attempts = 3) {
+    let lastErr;
+    for (let i = 0; i < attempts; i++) {
+        try {
+            await sleep(200 + Math.floor(Math.random() * 400));
+            return await fn();
+        } catch (e) {
+            lastErr = e;
+            const delay = 400 * Math.pow(2, i) + Math.floor(Math.random() * 300);
+            await sleep(delay);
+        }
+    }
+    throw lastErr;
+}
 
 /**
  * 获取 Adobe Guest Token（匿名访客令牌）
  * @returns {Promise<string>} access_token
  */
 async function getGuestToken() {
-    // 检查缓存的 token 是否仍然有效（预留 5 分钟缓冲）
     if (cachedToken && Date.now() < tokenExpiry - 300000) {
         return cachedToken;
     }
-
-    const params = new URLSearchParams({
-        guest_allowed: 'true',
-        client_id: CLIENT_ID,
-        scope: [
-            'ab.manage',
-            'AdobeID',
-            'openid',
-            'read_organizations',
-            'creative_cloud',
-            'creative_sdk',
-            'tk_platform',
-            'tk_platform_sync',
-            'af_byof',
-            'DCAPI',
-            'tk_platform_grant_free_subscription',
-            'pps.read',
-            'firefly_api',
-            'uds_read',
-            'uds_write',
-            'additional_info.ownerOrg',
-            'additional_info.roles',
-        ].join(','),
+    if (inFlightTokenPromise) return inFlightTokenPromise;
+    inFlightTokenPromise = withRetry(async () => {
+        const params = new URLSearchParams({
+            guest_allowed: 'true',
+            client_id: CLIENT_ID,
+            scope: [
+                'ab.manage',
+                'AdobeID',
+                'openid',
+                'read_organizations',
+                'creative_cloud',
+                'creative_sdk',
+                'tk_platform',
+                'tk_platform_sync',
+                'af_byof',
+                'DCAPI',
+                'tk_platform_grant_free_subscription',
+                'pps.read',
+                'firefly_api',
+                'uds_read',
+                'uds_write',
+                'additional_info.ownerOrg',
+                'additional_info.roles',
+            ].join(','),
+        });
+        const res = await fetch(`${TOKEN_ENDPOINT}?jslVersion=v2-v0.48.0-1-g1e322cb`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                'Cache-Control': 'no-cache',
+            },
+            body: params.toString(),
+        });
+        if (!res.ok) {
+            throw new Error(`获取 Adobe Token 失败 (${res.status})`);
+        }
+        const data = await res.json();
+        cachedToken = data.access_token;
+        tokenExpiry = Date.now() + (data.expires_in || 3600000);
+        return cachedToken;
+    }).finally(() => {
+        inFlightTokenPromise = null;
     });
-
-    const response = await fetch(`${TOKEN_ENDPOINT}?jslVersion=v2-v0.48.0-1-g1e322cb`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-        },
-        body: params.toString(),
-    });
-
-    if (!response.ok) {
-        throw new Error(`获取 Adobe Token 失败 (${response.status})`);
-    }
-
-    const data = await response.json();
-    cachedToken = data.access_token;
-    // expires_in 是毫秒
-    tokenExpiry = Date.now() + (data.expires_in || 3600000);
-
-    return cachedToken;
+    return inFlightTokenPromise;
 }
 
 /**
@@ -207,7 +223,7 @@ function parseMultipartResponse(buffer, boundary) {
  * @param {Blob} maskBlob - mask 蒙版图片
  * @returns {Promise<Blob>} 透明背景的 PNG
  */
-async function applyMaskToImage(originalImage, maskBlob) {
+async function applyMaskToImage(originalImage, maskBlob, options = {}) {
     // 加载原图
     const originalBitmap = await createImageBitmap(originalImage);
     // 加载 mask
@@ -234,15 +250,28 @@ async function applyMaskToImage(originalImage, maskBlob) {
     maskCanvas.width = width;
     maskCanvas.height = height;
     const maskCtx = maskCanvas.getContext('2d');
+    const featherPx = Math.max(0, Number(options.feather || 0));
+    if (featherPx > 0 && maskCtx.filter !== undefined) {
+        maskCtx.filter = `blur(${featherPx}px)`;
+    }
     maskCtx.drawImage(maskBitmap, 0, 0, width, height);
     const maskData = maskCtx.getImageData(0, 0, width, height);
     const maskPixels = maskData.data;
 
-    // 应用 mask：mask 白色区域保留，黑色区域透明
+    // 应用 mask：支持阈值与羽化/扩展
+    const thr = Math.max(0, Math.min(1, Number(options.threshold || 0)));
+    const expand = Number(options.expand || 0);
+    const thrVal = Math.round(thr * 255);
+    const effectiveThr = Math.max(0, Math.min(255, thrVal - expand * 5));
     for (let i = 0; i < pixels.length; i += 4) {
-        // 使用 mask 的灰度值作为 alpha
         const maskValue = maskPixels[i]; // R 通道（灰度图 R=G=B）
-        pixels[i + 3] = maskValue; // 设置 alpha
+        let alpha;
+        if (maskValue <= effectiveThr) {
+            alpha = 0;
+        } else {
+            alpha = Math.round(((maskValue - effectiveThr) / (255 - effectiveThr)) * 255);
+        }
+        pixels[i + 3] = alpha;
     }
 
     ctx.putImageData(imageData, 0, 0);
@@ -258,8 +287,7 @@ async function applyMaskToImage(originalImage, maskBlob) {
  * @param {File} file - 要处理的图片文件
  * @returns {Promise<Blob>} 透明背景的 PNG blob
  */
-export async function removeBackgroundWithAdobe(file) {
-    // 1. 获取 Guest Token
+export async function removeBackgroundWithAdobe(file, options = {}) {
     const token = await getGuestToken();
 
     const mimeType = file.type || 'image/png';
@@ -270,17 +298,25 @@ export async function removeBackgroundWithAdobe(file) {
     formData.append('infile', file, file.name);
 
     // 3. 发送请求
-    const response = await fetch(SENSEI_ENDPOINT, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'x-api-key': API_KEY,
-            'x-transaction-id': generateTransactionId(),
-            'prefer': 'respond-sync, wait=100',
-            'accept': 'multipart/form-data',
-        },
-        body: formData,
-    });
+    let response;
+    try {
+        response = await withRetry(async () => {
+            return await fetch(SENSEI_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'x-api-key': API_KEY,
+                    'x-transaction-id': generateTransactionId(),
+                    'prefer': 'respond-sync, wait=100',
+                    'accept': 'multipart/form-data',
+                    'Cache-Control': 'no-cache',
+                },
+                body: formData,
+            });
+        }, 3);
+    } catch (e) {
+        throw new Error('Adobe 服务连接失败，请检查开发代理或网络');
+    }
 
     if (!response.ok) {
         const contentType = response.headers.get('content-type') || '';
@@ -343,6 +379,6 @@ export async function removeBackgroundWithAdobe(file) {
     }
 
     // 7. 用 mask 合成透明图片
-    const resultBlob = await applyMaskToImage(file, maskBlob);
+    const resultBlob = await applyMaskToImage(file, maskBlob, options);
     return resultBlob;
 }

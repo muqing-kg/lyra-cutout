@@ -149,10 +149,11 @@ const ExifViewer = () => {
             {/* 主内容区 */}
             <div className="exif-content">
                 {!image ? (
-                    <div className="empty-state file-zone">
+                    <div className="empty-state file-zone" onClick={() => document.getElementById('exifInput').click()}>
                         <div className="file-zone-icon">🔍</div>
                         <div className="file-zone-text">EXIF 查看器</div>
                         <div className="file-zone-hint">查看和清除图片元数据</div>
+                        <input id="exifInput" type="file" accept="image/*" onChange={handleUpload} hidden />
                     </div>
                 ) : (
                     <div className="exif-layout">

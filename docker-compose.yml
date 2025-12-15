@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  image-editing:
+    image: muqingw/image-editing:latest
+    container_name: image-editing
+    restart: always
+    ports:
+      - "9090:80"
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep -q '[n]ginx' && [ -f /usr/share/nginx/html/index.html ]"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

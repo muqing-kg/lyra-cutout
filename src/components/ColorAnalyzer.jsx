@@ -123,7 +123,7 @@ const ColorAnalyzer = () => {
             score = 75;
             description = '三角配色 - 丰富多彩，活泼生动';
         } else if (avgHueDiff < 60) {
-            type = 'warm' in colors.some(c => c.hsl.h < 60 || c.hsl.h > 300) ? 'warm' : 'cool';
+            type = colors.some(c => c.hsl.h < 60 || c.hsl.h > 300) ? 'warm' : 'cool';
             score = 70;
             description = type === 'warm' ? '暖色调为主' : '冷色调为主';
         } else {
@@ -222,10 +222,11 @@ const ColorAnalyzer = () => {
                     {image ? (
                         <img src={image.url} alt="preview" className="preview-image" />
                     ) : (
-                        <div className="empty-state file-zone">
+                        <div className="empty-state file-zone" onClick={() => document.getElementById('colorAnalyzerInput').click()}>
                             <div className="file-zone-icon">🎨</div>
                             <div className="file-zone-text">色彩和谐分析</div>
                             <div className="file-zone-hint">上传图片，分析配色方案</div>
+                            <input id="colorAnalyzerInput" type="file" accept="image/*" onChange={handleUpload} hidden />
                         </div>
                     )}
                     <canvas ref={canvasRef} style={{ display: 'none' }} />

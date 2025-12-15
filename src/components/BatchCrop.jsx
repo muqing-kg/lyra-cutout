@@ -355,7 +355,6 @@ const BatchCrop = () => {
                 <div className="crop-main">
                     {currentImage ? (
                         <Cropper
-                            key={currentImage.id}
                             src={currentImage.url}
                             style={{ height: '100%', width: '100%' }}
                             aspectRatio={currentImage.aspectRatio}
@@ -363,14 +362,19 @@ const BatchCrop = () => {
                             ref={cropperRef}
                             viewMode={1}
                             dragMode="move"
+                            autoCropArea={1}
+                            background={false}
+                            checkOrientation={false}
+                            crossOrigin="anonymous"
                             ready={onCropperReady}
                             cropend={onCropEnd}
                         />
                     ) : (
-                        <div className="empty-state file-zone">
+                        <div className="empty-state file-zone" onClick={() => document.getElementById('batchCropInput').click()}>
                             <div className="file-zone-icon">✂️</div>
                             <div className="file-zone-text">选择图片开始裁剪</div>
                             <div className="file-zone-hint">点击左上角"添加"按钮</div>
+                            <input id="batchCropInput" type="file" multiple accept="image/*" onChange={handleUpload} hidden />
                         </div>
                     )}
                 </div>

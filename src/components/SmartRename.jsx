@@ -213,12 +213,13 @@ const SmartRename = () => {
             {/* 主内容区 */}
             <div className="rename-content">
                 {images.length === 0 ? (
-                    <div className="empty-state file-zone">
+                    <div className="empty-state file-zone" onClick={() => document.getElementById('smartRenameInput').click()}>
                         <div className="file-zone-icon">📝</div>
                         <div className="file-zone-text">批量智能重命名</div>
                         <div className="file-zone-hint">
                             {isLoading ? '正在加载 AI 模型...' : 'AI 识别图片内容，自动生成文件名'}
                         </div>
+                        <input id="smartRenameInput" type="file" accept="image/*" multiple onChange={handleUpload} hidden />
                     </div>
                 ) : (
                     <>

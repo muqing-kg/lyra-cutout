@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import Lightbox from './Lightbox.jsx';
 
 /**
  * 批量水印
@@ -11,7 +12,7 @@ import { saveAs } from 'file-saver';
 const Watermark = () => {
     const [images, setImages] = useState([]);
     const [watermarkType, setWatermarkType] = useState('text'); // text | image
-    const [text, setText] = useState('© Lyra Cutout');
+    const [text, setText] = useState('© MuQing');
     const [fontSize, setFontSize] = useState(24);
     const [fontColor, setFontColor] = useState('#ffffff');
     const [opacity, setOpacity] = useState(0.7);
@@ -22,6 +23,8 @@ const Watermark = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [results, setResults] = useState([]);
     const canvasRef = useRef(null);
+    const [viewerOpen, setViewerOpen] = useState(false);
+    const [viewerIndex, setViewerIndex] = useState(0);
 
     // 上传图片
     const handleUpload = (e) => {
@@ -210,112 +213,99 @@ const Watermark = () => {
                     </div>
 
                     {watermarkType === 'text' ? (
-                        <>
+                        <div className="inline-controls">
                             <div className="field">
                                 <span className="field-label">水印文字</span>
-                                <input
-                                    type="text"
-                                    className="input-field"
-                                    value={text}
-                                    onChange={(e) => setText(e.target.value)}
-                                    style={{ width: 200 }}
-                                />
+                                <input type="text" className="input-field" value={text} onChange={(e) => setText(e.target.value)} style={{ width: 200 }} />
                             </div>
                             <div className="field">
                                 <span className="field-label">字号</span>
-                                <input
-                                    type="number"
-                                    className="input-field"
-                                    value={fontSize}
-                                    onChange={(e) => setFontSize(parseInt(e.target.value) || 24)}
-                                    min="12"
-                                    max="100"
-                                    style={{ width: 60 }}
-                                />
+                                <input type="number" className="input-field" value={fontSize} onChange={(e) => setFontSize(parseInt(e.target.value) || 24)} min="12" max="100" style={{ width: 60 }} />
                             </div>
                             <div className="field">
                                 <span className="field-label">颜色</span>
-                                <input
-                                    type="color"
-                                    value={fontColor}
-                                    onChange={(e) => setFontColor(e.target.value)}
-                                    style={{ width: 40, height: 30 }}
-                                />
+                                <input type="color" value={fontColor} onChange={(e) => setFontColor(e.target.value)} style={{ width: 40, height: 30 }} />
                             </div>
-                        </>
+                            <div className="field">
+                                <span className="field-label">透明度</span>
+                                <input type="range" min="0.1" max="1" step="0.1" value={opacity} onChange={(e) => setOpacity(parseFloat(e.target.value))} style={{ width: 120 }} />
+                                <span>{Math.round(opacity * 100)}%</span>
+                            </div>
+                            <div className="field">
+                                <span className="field-label">位置</span>
+                                <select className="input-field" value={position} onChange={(e) => setPosition(e.target.value)}>
+                                    {positions.map((p) => (<option key={p.value} value={p.value}>{p.label}</option>))}
+                                </select>
+                            </div>
+                        </div>
                     ) : (
-                        <>
+                        <div className="inline-controls">
                             <div className="field">
                                 <label className="btn-secondary" style={{ display: 'inline-block' }}>
                                     选择水印图片
                                     <input type="file" accept="image/*" onChange={handleWatermarkUpload} hidden />
                                 </label>
-                                {watermarkImage && (
-                                    <img src={watermarkImage.url} alt="wm" style={{ height: 30, marginLeft: 8, verticalAlign: 'middle' }} />
-                                )}
+                                {watermarkImage && (<img src={watermarkImage.url} alt="wm" style={{ height: 30, marginLeft: 8, verticalAlign: 'middle' }} />)}
                             </div>
                             <div className="field">
                                 <span className="field-label">缩放</span>
-                                <input
-                                    type="range"
-                                    min="0.05"
-                                    max="0.5"
-                                    step="0.05"
-                                    value={watermarkScale}
-                                    onChange={(e) => setWatermarkScale(parseFloat(e.target.value))}
-                                    style={{ width: 100 }}
-                                />
-                                <span style={{ marginLeft: 8 }}>{Math.round(watermarkScale * 100)}%</span>
+                                <input type="range" min="0.05" max="0.5" step="0.05" value={watermarkScale} onChange={(e) => setWatermarkScale(parseFloat(e.target.value))} style={{ width: 120 }} />
+                                <span>{Math.round(watermarkScale * 100)}%</span>
                             </div>
-                        </>
+                            <div className="field">
+                                <span className="field-label">透明度</span>
+                                <input type="range" min="0.1" max="1" step="0.1" value={opacity} onChange={(e) => setOpacity(parseFloat(e.target.value))} style={{ width: 120 }} />
+                                <span>{Math.round(opacity * 100)}%</span>
+                            </div>
+                            <div className="field">
+                                <span className="field-label">位置</span>
+                                <select className="input-field" value={position} onChange={(e) => setPosition(e.target.value)}>
+                                    {positions.map((p) => (<option key={p.value} value={p.value}>{p.label}</option>))}
+                                </select>
+                            </div>
+                        </div>
                     )}
-
-                    <div className="field">
-                        <span className="field-label">透明度</span>
-                        <input
-                            type="range"
-                            min="0.1"
-                            max="1"
-                            step="0.1"
-                            value={opacity}
-                            onChange={(e) => setOpacity(parseFloat(e.target.value))}
-                            style={{ width: 100 }}
-                        />
-                        <span style={{ marginLeft: 8 }}>{Math.round(opacity * 100)}%</span>
-                    </div>
-
-                    <div className="field">
-                        <span className="field-label">位置</span>
-                        <select
-                            className="input-field"
-                            value={position}
-                            onChange={(e) => setPosition(e.target.value)}
-                        >
-                            {positions.map((p) => (
-                                <option key={p.value} value={p.value}>{p.label}</option>
-                            ))}
-                        </select>
-                    </div>
                 </div>
             </div>
 
             {/* 主内容区 */}
             <div className="watermark-content">
                 {images.length === 0 ? (
-                    <div className="empty-state file-zone">
+                    <div className="empty-state file-zone" onClick={() => document.getElementById('watermarkInput').click()}>
                         <div className="file-zone-icon">💧</div>
                         <div className="file-zone-text">批量水印</div>
                         <div className="file-zone-hint">为多张图片添加文字或图片水印</div>
+                        <input id="watermarkInput" type="file" accept="image/*" multiple onChange={handleUpload} hidden />
                     </div>
                 ) : (
                     <div className="watermark-grid">
                         {images.map((img, idx) => (
                             <div key={img.id} className="watermark-item">
-                                <img src={results[idx]?.result || img.url} alt="preview" />
+                                <img
+                                    src={results[idx]?.result || img.url}
+                                    alt="preview"
+                                    onClick={() => { setViewerIndex(idx); setViewerOpen(true); }}
+                                />
                                 <button className="del-btn" onClick={() => deleteImage(img.id)}>×</button>
                                 <div className="watermark-item-name">{img.name}</div>
                             </div>
                         ))}
+                    </div>
+                )}
+                {images.length > 0 && (
+                    <div className="actions" style={{ marginTop: 12 }}>
+                        <button
+                            className="btn-primary"
+                            onClick={processImages}
+                            disabled={isProcessing || (watermarkType === 'image' && !watermarkImage)}
+                        >
+                            {isProcessing ? '处理中...' : '💧 应用水印'}
+                        </button>
+                        {results.length > 0 && (
+                            <button className="btn-secondary" onClick={downloadAll} style={{ marginLeft: 8 }}>
+                                📦 打包下载
+                            </button>
+                        )}
                     </div>
                 )}
             </div>
@@ -323,22 +313,14 @@ const Watermark = () => {
             {/* 隐藏画布 */}
             <canvas ref={canvasRef} style={{ display: 'none' }} />
 
-            {/* 操作按钮 */}
             {images.length > 0 && (
-                <div className="actions" style={{ marginTop: 16 }}>
-                    <button
-                        className="btn-primary"
-                        onClick={processImages}
-                        disabled={isProcessing || (watermarkType === 'image' && !watermarkImage)}
-                    >
-                        {isProcessing ? '处理中...' : '💧 应用水印'}
-                    </button>
-                    {results.length > 0 && (
-                        <button className="btn-secondary" onClick={downloadAll} style={{ marginLeft: 8 }}>
-                            📦 打包下载
-                        </button>
-                    )}
-                </div>
+                <Lightbox
+                    open={viewerOpen}
+                    images={images.map((img, idx) => results[idx]?.result || img.url)}
+                    index={viewerIndex}
+                    onClose={() => setViewerOpen(false)}
+                    onIndexChange={setViewerIndex}
+                />
             )}
         </>
     );

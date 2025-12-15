@@ -111,6 +111,13 @@ const ImageCompressor = () => {
     const totalCompressed = results.reduce((sum, r) => sum + r.newSize, 0);
     const totalSaved = totalOriginal - totalCompressed;
 
+    const removeImage = (idx) => {
+        const img = images[idx];
+        try { URL.revokeObjectURL(img.url); } catch {}
+        setImages((prev) => prev.filter((_, i) => i !== idx));
+        setResults((prev) => prev.filter((_, i) => i !== idx));
+    };
+
     return (
         <>
             {/* 控制面板 */}
@@ -128,31 +135,31 @@ const ImageCompressor = () => {
                         )}
                     </div>
 
-                    <div className="field">
-                        <span className="field-label">压缩质量</span>
-                        <input
-                            type="range"
-                            min="0.1"
-                            max="1"
-                            step="0.1"
-                            value={quality}
-                            onChange={(e) => setQuality(parseFloat(e.target.value))}
-                            style={{ width: 120 }}
-                        />
-                        <span style={{ marginLeft: 8 }}>{Math.round(quality * 100)}%</span>
-                    </div>
-
-                    <div className="field">
-                        <span className="field-label">最大宽度</span>
-                        <input
-                            type="number"
-                            className="input-field"
-                            value={maxWidth || ''}
-                            onChange={(e) => setMaxWidth(parseInt(e.target.value) || 0)}
-                            placeholder="不限制"
-                            style={{ width: 100 }}
-                        />
-                        <span style={{ marginLeft: 8, color: 'var(--ink-2)' }}>px (0=不限)</span>
+                    <div className="inline-controls">
+                        <div className="field">
+                            <span className="field-label">压缩质量</span>
+                            <input
+                                type="range"
+                                min="0.1"
+                                max="1"
+                                step="0.1"
+                                value={quality}
+                                onChange={(e) => setQuality(parseFloat(e.target.value))}
+                            />
+                            <span>{Math.round(quality * 100)}%</span>
+                        </div>
+                        <div className="field">
+                            <span className="field-label">最大宽度</span>
+                            <input
+                                type="number"
+                                className="input-field"
+                                value={maxWidth || ''}
+                                onChange={(e) => setMaxWidth(parseInt(e.target.value) || 0)}
+                                placeholder="不限制"
+                                style={{ width: 100 }}
+                            />
+                            <span style={{ color: 'var(--ink-2)' }}>px (0=不限)</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -160,10 +167,11 @@ const ImageCompressor = () => {
             {/* 主内容区 */}
             <div className="compressor-content">
                 {images.length === 0 ? (
-                    <div className="empty-state file-zone">
+                    <div className="empty-state file-zone" onClick={() => document.getElementById('compressorInput').click()}>
                         <div className="file-zone-icon">📊</div>
                         <div className="file-zone-text">图片压缩</div>
                         <div className="file-zone-hint">调整质量减小文件体积</div>
+                        <input id="compressorInput" type="file" accept="image/*" multiple onChange={handleUpload} hidden />
                     </div>
                 ) : (
                     <>
@@ -175,6 +183,14 @@ const ImageCompressor = () => {
                         )}
                         <div className="compress-table">
                             <table>
+                                <colgroup>
+                                    <col style={{ width: '50%' }} />
+                                    <col style={{ width: '14%' }} />
+                                    <col style={{ width: '6%' }} />
+                                    <col style={{ width: '14%' }} />
+                                    <col style={{ width: '10%' }} />
+                                    <col style={{ width: '6%' }} />
+                                </colgroup>
                                 <thead>
                                     <tr>
                                         <th>图片</th>
@@ -182,17 +198,27 @@ const ImageCompressor = () => {
                                         <th>→</th>
                                         <th>压缩后</th>
                                         <th>节省</th>
+                                        <th style={{ width: 60 }}>操作</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {images.map((img, idx) => (
                                         <tr key={img.id}>
-                                            <td className="compress-name">{img.name}</td>
+                                            <td className="compress-name">
+                                                <span className="cell-file">
+                                                    <img className="cell-thumb" src={img.url} alt="thumb" />
+                                                    <span className="cell-name">{img.name}</span>
+                                                    <button className="del-btn" onClick={() => removeImage(idx)} title="删除">×</button>
+                                                </span>
+                                            </td>
                                             <td>{formatSize(img.size)}</td>
                                             <td>{results[idx] ? '→' : '-'}</td>
                                             <td>{results[idx] ? formatSize(results[idx].newSize) : '-'}</td>
                                             <td className={results[idx]?.ratio > 0 ? 'text-success' : ''}>
                                                 {results[idx] ? `-${results[idx].ratio}%` : '-'}
+                                            </td>
+                                            <td>
+                                                <button className="icon-btn delete" onClick={() => removeImage(idx)} title="删除">🗑️</button>
                                             </td>
                                         </tr>
                                     ))}
@@ -208,7 +234,7 @@ const ImageCompressor = () => {
 
             {/* 操作按钮 */}
             {images.length > 0 && (
-                <div className="actions" style={{ marginTop: 16 }}>
+                <div className="actions" style={{ marginTop: 12 }}>
                     <button className="btn-primary" onClick={compressImages} disabled={isProcessing}>
                         {isProcessing ? '压缩中...' : '📊 开始压缩'}
                     </button>

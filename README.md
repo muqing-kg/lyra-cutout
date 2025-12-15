@@ -1,435 +1,186 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-light.svg" width="120">
-    <source media="(prefers-color-scheme: light)" srcset="assets/logo-dark.svg" width="120">
-    <img alt="Lyra Image Logo" src="assets/logo-dark.svg" width="120">
-  </picture>
-</p>
-
-<h1 align="center">Lyra Image</h1>
+<h1 align="center">MuQing Image 部署文档</h1>
 
 <p align="center">
-  <strong>All-in-One AI-Powered Image Processing Platform</strong>
-</p>
-
-<p align="center">
-  <a href="README_CN.md">🇨🇳 中文文档</a> •
-  <a href="https://lyra-cutout.pages.dev/" target="_blank">🌟 Live Demo</a> •
-  <a href="#features">Features</a> •
-  <a href="#quick-start">Quick Start</a> •
-  <a href="#usage-guide">Usage Guide</a> •
-  <a href="#license">License</a>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/license-CC--BY--NC--SA--4.0-blue.svg" alt="License">
-  <img src="https://img.shields.io/badge/React-18.3-61dafb.svg?logo=react&logoColor=white" alt="React">
-  <img src="https://img.shields.io/badge/Vite-6.0-646cff.svg?logo=vite&logoColor=white" alt="Vite">
-  <img src="https://img.shields.io/badge/TensorFlow.js-AI-FF6F00.svg?logo=tensorflow&logoColor=white" alt="TensorFlow.js">
-</p>
-
-<p align="center">
-  <!-- Live Demo Badge -->
-  <a href="https://lyra-cutout.pages.dev/" target="_blank">
-    <img src="https://img.shields.io/website?url=https%3A%2F%2Flyra-cutout.pages.dev%2F&up_message=online&down_message=offline&label=Live%20Demo&style=for-the-badge&logo=vercel&logoColor=white&color=success" alt="Live Demo">
-  </a>
-  <!-- Deploy Badge -->
-  <a href="https://deploy.cloudflare.com/?url=https://github.com/petehsu/lyra-cutout" target="_blank">
-    <img src="https://img.shields.io/badge/Deploy-Cloudflare%20Pages-F38020?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Deploy to Cloudflare Pages">
-  </a>
+  <strong>使用 Docker 镜像一键部署到云服务器</strong>
 </p>
 
 ---
 
-## ⚠️ Disclaimer
+## 简介
 
-**This project is for educational and learning purposes only. Commercial use is strictly prohibited.**
-
-This tool leverages third-party AI services (Adobe Sensei, remove.bg). Please comply with the respective service terms and conditions. The author assumes no responsibility for any misuse or violation of third-party terms.
+MuQing Image 是一站式智能图片处理平台，前端单页应用（SPA），通过 Nginx 静态托管并反向代理 Adobe 接口即可运行，无需后端服务。
 
 ---
 
-## ✨ Features
+## 新增功能概览
 
-### 🎨 Core Tools
-- **Smart Background Removal** - Adobe Express, remove.bg, Local rembg
-- **Batch Cropping** - Professional aspect ratios, linked editing
-- **AI Smart Crop** - TensorFlow.js subject detection, composition suggestions
-- **Color Harmony Analyzer** - Extract palettes, harmony scoring
-
-### 🛠️ Image Utilities
-- **Image Stitcher** - Combine screenshots into long images
-- **Privacy Mosaic** - Blur/pixelate sensitive areas
-- **Batch Watermark** - Text/image watermarks with positioning
-- **Image Compressor** - Reduce file size with quality control
-- **Format Converter** - PNG/JPG/WebP conversion
-- **Image Resizer** - Batch resize with aspect ratio lock
-- **EXIF Viewer** - View and strip metadata
-- **Before/After Slider** - Compare two images
-- **Collage Maker** - Grid layouts (2x2, 3x3, etc.)
-- **Steganography** - Hide secret messages in images with multi-factor authentication
-
-### ⚡ Platform Highlights
-- 🆓 **100% Free** - No API keys, no registration required
-- 🔒 **Privacy-First** - All processing in browser, no uploads
-- 📱 **Responsive** - Works on desktop, tablet, and mobile
-- ⚡ **Fast** - WebAssembly/WebGL accelerated AI
-
-## ✂️ Batch Cropping Tool (New)
-
-Lyra Cutout now features a powerful **Batch Cropping Module**, allowing you to process images locally without uploading:
-- **Batch Management**: Import multiple images at once and manage them in a list.
-- **Synced Adjustment**: Unique "Sync" feature—adjust one image's crop box (ratio/relative position), and all other images sync automatically. Perfect for e-commerce/ID photos.
-- **Professional Presets**: Built-in 1:1, 4:3, 16:9, 2.35:1 (Cinematic), and more.
-- **Privacy First**: Powered by browser Canvas technology, all cropping is done locally. Fast and data-saving.
+- 智能抠图增强
+  - 本地蒙版后处理参数：阈值、边缘羽化、边缘扩展
+  - 预设场景：人像柔边、商品白底、发丝毛发、Logo扁平等
+  - 并发控制保持 10，自动退避重试与令牌单航班
+- 预览与切换
+  - 全屏预览 Lightbox：点击缩略图放大、双击/点击缩放
+  - 键盘左右键、鼠标滚轮、手机滑动切换
+  - 打开时锁定页面滚动，滚轮不穿透背景
+- 上传体验
+  - 除“智能抠图/图片对比/拼贴画”外，其他页面空态卡片均支持点击开启文件选择
+  - 每页按能力限制单/多选：压缩/尺寸/水印/拼接/裁剪等支持多选，色彩分析/EXIF/隐私马赛克支持单选
+- 列表管理
+  - 抠图页面文件项展示缩略图 + 文件名 + 删除按钮
+  - 压缩与尺寸调整列表在表格中直接提供删除按钮
+- 表格与布局
+  - 压缩与尺寸调整列表加入列宽分配与数值居中，列间距更合理
+- 代理与部署
+  - Nginx 增加 `client_max_body_size 50m`、`proxy_request_buffering off`、补充浏览器头
+  - 超时提升与 SNI 打开，降低上游风控影响
 
 ---
 
-## 🚀 Quick Start
+## 快速部署（Docker Compose）
 
-### Prerequisites
+### 1. 环境准备
+- Docker 20+
+- Docker Compose v2+
+- 云服务器开放端口 `80`
 
-- Node.js 18+ and npm
-
-### Installation
+### 2. 拉取代码并构建运行
 
 ```bash
-# Clone the repository
 git clone https://github.com/petehalverson/lyra-cutout.git
 cd lyra-cutout
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
+docker compose up -d --build
+docker compose ps
 ```
 
-Open http://localhost:5173 in your browser.
+访问 `http://<云服务器IP>:9090/`。
 
 ---
 
-## 📖 Usage Guide
+## 镜像构建与推送（Docker Hub）
 
-Lyra Cutout supports three background removal engines. Choose the one that best fits your needs:
-
-### Option 1: Adobe Express (Recommended) ⭐
-
-**Best for:** Free, high-quality results without any setup
-
-1. Select **"⭐ Adobe (Free)"** mode
-2. Upload your images (supports multiple selection)
-3. Click **"🚀 Start Batch Processing"**
-4. Download individual results or ZIP all
-
-**Pros:**
-- ✅ Completely free
-- ✅ No API key required
-- ✅ No registration needed
-- ✅ High-quality Adobe Sensei AI
-- ✅ Up to 10 concurrent processing
-
-**Cons:**
-- ⚠️ Requires internet connection
-- ⚠️ May have rate limits
-
----
-
-### Option 2: remove.bg API
-
-**Best for:** Professional use with paid API access
-
-1. Get your API key from [remove.bg](https://www.remove.bg/api)
-2. Select **"remove.bg"** mode
-3. Enter your API key
-4. Upload and process images
-
-**Pros:**
-- ✅ Consistent quality
-- ✅ Full resolution output (with paid plan)
-- ✅ Professional API support
-
-**Cons:**
-- ⚠️ Requires API key
-- ⚠️ Free tier has limited credits
-- ⚠️ API key exposed in browser (use backend proxy for production)
-
----
-
-### Option 3: Local rembg Server
-
-**Best for:** Offline processing, privacy-sensitive workflows, unlimited usage
-
-This option requires setting up a local rembg server. Here's how:
-
-#### Step 1: Install rembg
+镜像仓库示例：`muqingw/image-editing`
 
 ```bash
-# Using pip
-pip install rembg[gpu]  # For GPU support
-# or
-pip install rembg        # CPU only
-
-# Using Docker (recommended)
-docker pull danielgatis/rembg
+docker build -t muqingw/image-editing:latest .
+docker login
+docker push muqingw/image-editing:latest
 ```
 
-#### Step 2: Start the Server
-
-**Using Python:**
+使用他人服务器部署时，可直接：
 
 ```bash
-# Start rembg server on port 7000
-rembg s --host 0.0.0.0 --port 7000
-```
-
-**Using Docker:**
-
-```bash
-docker run -d -p 7000:5000 danielgatis/rembg s
-```
-
-#### Step 3: Configure in Lyra Cutout
-
-1. Select **"Local rembg"** mode
-2. Enter server address: `http://localhost:7000` (or `/rembg` if using dev proxy)
-3. Upload and process images
-
-**Pros:**
-- ✅ No internet required
-- ✅ Complete privacy
-- ✅ Unlimited processing
-- ✅ No API keys needed
-
-**Cons:**
-- ⚠️ Requires local setup
-- ⚠️ GPU recommended for speed
-- ⚠️ Quality depends on model
-
-#### Advanced: Using GPU Acceleration
-
-For faster processing, use CUDA GPU:
-
-```bash
-# Install with ONNX GPU support
-pip install rembg[gpu] onnxruntime-gpu
-
-# Verify GPU detection
-python -c "import onnxruntime; print(onnxruntime.get_device())"
+docker pull muqingw/image-editing:latest
+docker run -d -p 9090:80 --restart=always --name image-editing muqingw/image-editing:latest
 ```
 
 ---
 
-## 🔬 Technical Implementation (Adobe Method)
+## 目录与文件
 
-A key feature of this project is the integration of the Adobe Express free background removal API via reverse engineering.
-
-### 1. Anonymous Authentication (Guest Token)
-
-Adobe Express allows guest usage. By analyzing network traffic, we identified an OAuth guest flow:
-- **Endpoint**: `POST /ims/check/v6/token`
-- **Params**: `guest_allowed=true`, `client_id=quickactions_hz_webapp`
-- **Result**: Obtains a temporary `access_token`.
-
-### 2. CORS & Request Forgery (Vite Proxy)
-
-Direct browser calls to Adobe APIs fail due to CORS. The project uses Vite's proxy (`vite.config.js`) to:
-- Forward frontend requests from `/adobe-api` to `https://sensei.adobe.io`.
-- Inject necessary headers to spoof the origin:
-  - `Origin: https://quick-actions.express.adobe.com`
-  - `Referer: https://quick-actions.express.adobe.com/`
-
-### 3. Sensei API Interaction
-
-The Adobe Sensei API returns a **Mask** (black & white image) instead of a transparent PNG.
-- **Request**: `multipart/form-data` with JSON config and the source image.
-- **Response**: A multipart response containing the mask as a JPEG.
-
-### 4. Client-Side Composition
-
-The final transparent image is composited entirely in the browser using the Canvas API:
-1. Draw original image to Canvas.
-2. Fetch the Mask image pixel data.
-3. Update the Alpha channel of the original image based on the Mask's grayscale values (Black = Transparent, White = Opaque).
-4. Export as PNG Blob.
-
-This approach leverages Adobe's powerful AI while keeping image processing client-side (via proxy), ensuring privacy and speed.
+- `Dockerfile`：Node 构建 + Nginx 运行时
+- `nginx.conf`：静态托管与反向代理
+  - `/` → `index.html` SPA 回退
+  - `/adobe-api/` → `https://sensei.adobe.io/`
+  - `/adobe-token/` → `https://adobeid-na1.services.adobe.com/`
+- 关键代理配置：
+  - `client_max_body_size 50m`
+  - `proxy_request_buffering off`（Sensei 上传走流式）
+  - 透传浏览器头：`User-Agent/Accept/Accept-Language/Accept-Encoding/Sec-Fetch-*`
+  - `proxy_ssl_server_name on`、超时提升（读/连/发）
+- `docker-compose.yml`：镜像构建与运行
+- `.dockerignore`：忽略本地运行产物（`node_modules`、`.vercel`、`dist` 等）
 
 ---
 
-## 🔐 Steganography Technical Implementation
+## 使用说明
 
-The steganography module implements a multi-layered security system for hiding secret messages within PNG images.
+### 智能抠图（Adobe）
+- 参数
+  - 阈值：0–80%，控制透明与保留的分界
+  - 边缘羽化：0–12px，柔化边缘
+  - 边缘扩展：-30～+30px，微调主体边缘
+- 预设
+  - 人像柔边、商品白底、发丝毛发、Logo 扁平、复杂纹理、透明玻璃、强切纯色、高对比硬边
+- 并发与稳定性
+  - 并发保持 10；令牌请求单航班 + 指数退避；请求含轻微随机抖动
+- 操作
+  - 上传后在结果网格点击缩略图预览；支持左右键/滚轮/滑动切换
 
-### 1. LSB (Least Significant Bit) Encoding
+### 批量水印
+- 文本/图片水印一行控件：文字/字号/颜色/透明度/位置或图片/缩放/透明度/位置
+- 处理完成后可在网格点击预览，支持序列切换与打包下载
 
-The core hiding technique uses LSB steganography:
+### 长图拼接
+- 拼接方向/间距/背景色为同一行控件
+- 预览图点击全屏查看
 
-```
-Original Pixel:  RGB(150, 200, 100) = Binary: 10010110, 11001000, 01100100
-Hidden Bit:      1
-Modified Pixel:  RGB(151, 200, 100) = Binary: 10010111, 11001000, 01100100
-                                              ^^^^^^^^ (1 bit changed)
-```
+### 图片压缩与尺寸调整
+- 列表在表格首列展示缩略图与文件名，并提供删除按钮
+- 压缩列表列宽与对齐优化；提供节省总量汇总
 
-- Only the **Red channel's least significant bit** is modified
-- Human eye cannot detect a 1/256 color change
-- Each pixel stores 1 bit; 8 pixels = 1 byte
-- Capacity: ~10KB text per 1MP image
+### 其他页面
+- 色彩分析、EXIF、隐私马赛克：空态卡片点击即可选择图片（单选）
+- 批量裁剪：空态卡片点击选择图片（多选）
 
-### 2. Data Structure
+---
 
-```
-┌──────────────┬───────────┬──────────────┬─────────────┐
-│  Magic (4B)  │ Flags (1B)│ Length (4B)  │  Payload    │
-│    "LYRA"    │  0b00000  │   N bytes    │   N bytes   │
-└──────────────┴───────────┴──────────────┴─────────────┘
-```
+## 常见问题
 
-**Authentication Flags (Bitmask):**
-| Bit | Flag | Description |
-|-----|------|-------------|
-| 0 | `AUTH_PASSWORD` | AES-256-GCM encryption enabled |
-| 1 | `AUTH_2FA` | TOTP verification required |
-| 2 | `AUTH_FACE` | Face recognition required |
+- 无法调用 Adobe 抠图接口
+  - 确认容器使用了仓库提供的 `nginx.conf`，并保持前端请求路径为 `/adobe-api` 与 `/adobe-token`
+  - 云服务器需允许外网访问 Adobe 域名（无需额外端口）
+- 403 风控或偶发失败
+  - 代理需透传浏览器关键头；已启用 SNI 与超时；前端请求包含退避与随机抖动
+  - 避免同时重复触发；令牌已缓存与并发合并
+- 变更端口
+  - 修改 `docker-compose.yml` 中 `ports` 映射，例如 `- "8080:80"`，并访问 `http://<IP>:8080/`
+- 静态托管而不反代
+  - 如果不使用 Adobe 抠图，可删除 `nginx.conf` 中的两段 `location` 代理，前端仍可使用其它本地工具模块
 
-### 3. AES-256-GCM Encryption
+---
 
-When password protection is enabled:
+## 升级与回滚
 
-```javascript
-// Key Derivation (PBKDF2)
-Salt: 16 random bytes
-Iterations: 100,000
-Hash: SHA-256
-Output: 256-bit AES key
-
-// Encryption
-Algorithm: AES-256-GCM
-IV: 12 random bytes
-Auth Tag: 16 bytes (built into ciphertext)
-
-// Stored Format:
-[Salt 16B][IV 12B][Ciphertext + AuthTag]
-```
-
-**Security Properties:**
-- ✅ Authenticated encryption (tamper detection)
-- ✅ Unique key per encryption (random salt)
-- ✅ Brute-force resistant (100K PBKDF2 iterations)
-
-### 4. TOTP Two-Factor Authentication
-
-Compatible with Google Authenticator, Microsoft Authenticator, Authy, etc.
-
-```
-TOTP Generation (RFC 6238):
-1. Secret: 160-bit random → Base32 encoded (32 chars)
-2. Time Step: floor(Unix_Time / 30)
-3. HMAC: HMAC-SHA1(secret, time_step)
-4. Truncation: Dynamic offset extraction
-5. Output: 6-digit code (modulo 1,000,000)
-```
-
-**Verification Window:** ±30 seconds (allows 1 step drift)
-
-**Data Storage:**
-```
-[Secret Length 1B][Base32 Secret ~32B][Encrypted Message]
-```
-
-### 5. Face Recognition Authentication
-
-A lightweight client-side face verification using histogram-based features.
-
-**Feature Extraction:**
-```
-Image (160×120 grayscale)
-       ↓
-Split into 4×4 = 16 regions
-       ↓
-Each region: 8-bin grayscale histogram
-       ↓
-Normalize to 0-255
-       ↓
-Output: 128-dimensional feature vector
-```
-
-**Comparison (Cosine Similarity):**
-```
-similarity = (A · B) / (||A|| × ||B||)
-
-Threshold: 0.70 (70% similarity required)
-```
-
-**Security Notes:**
-- 🔒 Face template stored encrypted within image
-- 🔒 No cloud upload, all processing in browser
-- ⚠️ Not as secure as professional face recognition
-- ⚠️ Sensitive to lighting/angle changes
-
-### 6. Combined Authentication Modes
-
-All three factors can be combined:
-
-| Mode | Security | Use Case |
-|------|----------|----------|
-| Password only | ⭐⭐ | Quick protection |
-| 2FA only | ⭐⭐ | Mobile-based auth |
-| Face only | ⭐⭐ | Biometric only |
-| Password + 2FA | ⭐⭐⭐ | Standard 2FA |
-| Password + Face | ⭐⭐⭐ | Biometric + password |
-| 2FA + Face | ⭐⭐⭐ | Passwordless 2FA |
-| All three | ⭐⭐⭐⭐ | Maximum security |
-
-### 7. Decryption Flow
-
-```
-Read Magic Header → Validate "LYRA"
-Read Flags → Determine required auth factors
-Read Length → Extract payload
-
-If PASSWORD flag:
-  └→ Prompt for password → PBKDF2 → AES-GCM Decrypt
-
-If 2FA flag:
-  └→ Extract TOTP secret from payload
-  └→ Prompt for 6-digit code → Verify TOTP
-
-If FACE flag:
-  └→ Extract face template from payload
-  └→ Capture live face → Compare similarity
-
-All verified → Display hidden message
+```bash
+docker pull muqingw/image-editing:latest
+docker compose up -d
+docker compose logs -f
+docker run -d -p 9090:80 --restart=always muqingw/image-editing:<tag>
 ```
 
 ---
 
-## 🏗️ Project Structure
+## 许可
+
+仅用于学习与研究，禁止用于商业用途。使用第三方服务需遵守相应条款。
+
+---
+
+## 🏗️ 项目结构
 
 ```
 lyra-cutout/
 ├── src/
-│   ├── App.jsx           # Main React component
-│   ├── adobeService.js   # Adobe Sensei API integration
-│   ├── theme.css         # Styling (notepad aesthetic)
-│   ├── logo.svg          # App logo
-│   └── main.jsx          # Entry point
+│   ├── App.jsx           # 主入口组件
+│   ├── adobeService.js   # Adobe 接口集成
+│   ├── theme.css         # 全站样式
+│   ├── logo.svg          # 应用 Logo
+│   └── main.jsx          # 挂载入口
 ├── assets/
 │   ├── logo-light.svg    # Logo for dark mode
 │   └── logo-dark.svg     # Logo for light mode
-├── index.html            # HTML template
-├── vite.config.js        # Vite configuration with proxies
+├── index.html            # HTML 模板
+├── vite.config.js        # 开发代理与构建配置
 └── package.json
 ```
 
 ---
 
-## 🔧 Development
+## 🔧 开发与构建
 
-### Vite Proxy Configuration
+### 开发代理（Vite）
 
-The development server includes proxies for Adobe API and local rembg:
+开发服务器包含 Adobe 接口代理：
 
 ```javascript
 // vite.config.js
@@ -446,54 +197,60 @@ proxy: {
 }
 ```
 
-### Build for Production
+### 生产构建
 
 ```bash
 npm run build
 npm run preview
 ```
 
-> ⚠️ **Note:** Production deployment requires a backend proxy to handle Adobe API requests, as CORS headers cannot be set from the browser.
+> ⚠️ 注意：线上已通过 `nginx.conf` 配置反向代理，无需在浏览器中设置跨域。
+
+### 本地开发
+
+```bash
+npm i
+npm run dev
+# 如需局域网访问
+npm run dev -- --host
+```
 
 ---
 
-## 📄 License
+## 📄 许可证（License）
 
-This project is licensed under the **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0)**.
+本项目采用 **CC BY-NC-SA 4.0** 许可。
 
-### You are free to:
+### 你可以：
 
-- **Share** — copy and redistribute the material in any medium or format
-- **Adapt** — remix, transform, and build upon the material
+- **共享** — 复制与再分发
+- **改作** — 混合、转换或在其基础上创作
 
-### Under the following terms:
+### 需遵守：
 
-- **Attribution** — You must give appropriate credit
-- **NonCommercial** — You may not use the material for commercial purposes
-- **ShareAlike** — If you remix, you must distribute under the same license
+- **署名** — 标注来源
+- **非商业** — 不得用于商业用途
+- **相同方式共享** — 改作需使用相同许可
 
-See [LICENSE](LICENSE) for the full license text.
-
----
-
-## 🙏 Acknowledgments
-
-- [Adobe Sensei](https://www.adobe.com/sensei.html) - AI background removal technology
-- [remove.bg](https://www.remove.bg) - Professional background removal API
-- [rembg](https://github.com/danielgatis/rembg) - Open source background removal tool
-- [React](https://reactjs.org) & [Vite](https://vitejs.dev) - Frontend framework and build tool
+详见 [LICENSE](LICENSE)。
 
 ---
 
-## 🤝 Contributing
+## 🙏 鸣谢
 
-Contributions are welcome! Please feel free to submit Issues and Pull Requests.
+- Adobe Sensei / remove.bg / rembg
+- React & Vite
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+---
+
+## 🤝 贡献
+
+欢迎提交 Issue 与 PR：
+
+1. Fork 仓库
+2. 创建分支（`feature/xxx`）
+3. 提交并推送
+4. 发起 Pull Request
 
 ---
 
@@ -502,5 +259,5 @@ Contributions are welcome! Please feel free to submit Issues and Pull Requests.
 </p>
 
 <p align="center">
-  <strong>⚠️ For Educational Use Only - Not for Commercial Use ⚠️</strong>
+  <strong>⚠️ 仅用于学习与研究，禁止商业用途 ⚠️</strong>
 </p>

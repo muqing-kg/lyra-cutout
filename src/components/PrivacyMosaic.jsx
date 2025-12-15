@@ -272,10 +272,11 @@ const PrivacyMosaic = () => {
             {/* 主内容区 */}
             <div className="mosaic-content">
                 {!image ? (
-                    <div className="empty-state file-zone">
+                    <div className="empty-state file-zone" onClick={() => document.getElementById('mosaicInput').click()}>
                         <div className="file-zone-icon">🔲</div>
                         <div className="file-zone-text">隐私马赛克</div>
                         <div className="file-zone-hint">框选区域添加马赛克保护隐私</div>
+                        <input id="mosaicInput" type="file" accept="image/*" onChange={handleUpload} hidden />
                     </div>
                 ) : (
                     <div className="mosaic-canvas-wrapper">

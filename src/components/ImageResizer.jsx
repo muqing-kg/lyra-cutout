@@ -18,6 +18,13 @@ const ImageResizer = () => {
     const [results, setResults] = useState([]);
     const canvasRef = useRef(null);
 
+    const removeImage = (idx) => {
+        const img = images[idx];
+        try { URL.revokeObjectURL(img.url); } catch {}
+        setImages((prev) => prev.filter((_, i) => i !== idx));
+        setResults((prev) => prev.filter((_, i) => i !== idx));
+    };
+
     // 上传图片
     const handleUpload = (e) => {
         const files = Array.from(e.target.files);
@@ -160,28 +167,52 @@ const ImageResizer = () => {
                     </div>
 
                     {mode === 'width' && (
-                        <div className="field">
-                            <span className="field-label">目标宽度</span>
-                            <input type="number" className="input-field" value={targetWidth} onChange={(e) => setTargetWidth(parseInt(e.target.value) || 800)} style={{ width: 80 }} />
-                            <span style={{ marginLeft: 8 }}>px</span>
+                        <div className="inline-controls">
+                            <div className="field">
+                                <span className="field-label">目标宽度</span>
+                                <input type="number" className="input-field" value={targetWidth} onChange={(e) => setTargetWidth(parseInt(e.target.value) || 800)} style={{ width: 90 }} />
+                                <span>px</span>
+                            </div>
+                            <div className="field">
+                                <label className="checkbox-label">
+                                    <input type="checkbox" checked={keepRatio} onChange={(e) => setKeepRatio(e.target.checked)} />
+                                    保持宽高比
+                                </label>
+                            </div>
                         </div>
                     )}
 
                     {mode === 'height' && (
-                        <div className="field">
-                            <span className="field-label">目标高度</span>
-                            <input type="number" className="input-field" value={targetHeight} onChange={(e) => setTargetHeight(parseInt(e.target.value) || 600)} style={{ width: 80 }} />
-                            <span style={{ marginLeft: 8 }}>px</span>
+                        <div className="inline-controls">
+                            <div className="field">
+                                <span className="field-label">目标高度</span>
+                                <input type="number" className="input-field" value={targetHeight} onChange={(e) => setTargetHeight(parseInt(e.target.value) || 600)} style={{ width: 90 }} />
+                                <span>px</span>
+                            </div>
+                            <div className="field">
+                                <label className="checkbox-label">
+                                    <input type="checkbox" checked={keepRatio} onChange={(e) => setKeepRatio(e.target.checked)} />
+                                    保持宽高比
+                                </label>
+                            </div>
                         </div>
                     )}
 
                     {mode === 'both' && (
-                        <div className="field">
-                            <span className="field-label">尺寸</span>
-                            <input type="number" className="input-field" value={targetWidth} onChange={(e) => setTargetWidth(parseInt(e.target.value) || 800)} style={{ width: 70 }} />
-                            <span style={{ margin: '0 8px' }}>×</span>
-                            <input type="number" className="input-field" value={targetHeight} onChange={(e) => setTargetHeight(parseInt(e.target.value) || 600)} style={{ width: 70 }} />
-                            <span style={{ marginLeft: 8 }}>px</span>
+                        <div className="inline-controls">
+                            <div className="field">
+                                <span className="field-label">尺寸</span>
+                                <input type="number" className="input-field" value={targetWidth} onChange={(e) => setTargetWidth(parseInt(e.target.value) || 800)} style={{ width: 80 }} />
+                                <span>×</span>
+                                <input type="number" className="input-field" value={targetHeight} onChange={(e) => setTargetHeight(parseInt(e.target.value) || 600)} style={{ width: 80 }} />
+                                <span>px</span>
+                            </div>
+                            <div className="field">
+                                <label className="checkbox-label">
+                                    <input type="checkbox" checked={keepRatio} onChange={(e) => setKeepRatio(e.target.checked)} />
+                                    保持宽高比
+                                </label>
+                            </div>
                         </div>
                     )}
 
@@ -193,48 +224,61 @@ const ImageResizer = () => {
                         </div>
                     )}
 
-                    {mode !== 'percent' && (
-                        <div className="field">
-                            <label className="checkbox-label">
-                                <input type="checkbox" checked={keepRatio} onChange={(e) => setKeepRatio(e.target.checked)} />
-                                保持宽高比
-                            </label>
-                        </div>
-                    )}
+                    {mode !== 'percent' && null}
                 </div>
             </div>
 
             {/* 主内容区 */}
             <div className="resizer-content">
                 {images.length === 0 ? (
-                    <div className="empty-state file-zone">
+                    <div className="empty-state file-zone" onClick={() => document.getElementById('resizerInput').click()}>
                         <div className="file-zone-icon">📏</div>
                         <div className="file-zone-text">尺寸调整</div>
                         <div className="file-zone-hint">批量缩放图片到指定尺寸</div>
+                        <input id="resizerInput" type="file" accept="image/*" multiple onChange={handleUpload} hidden />
                     </div>
                 ) : (
-                    <div className="resize-table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>图片</th>
-                                    <th>原尺寸</th>
-                                    <th>→</th>
-                                    <th>新尺寸</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {images.map((img, idx) => (
-                                    <tr key={img.id}>
-                                        <td className="resize-name">{img.name}</td>
-                                        <td>{results[idx] ? `${results[idx].origWidth}×${results[idx].origHeight}` : '-'}</td>
-                                        <td>{results[idx] ? '→' : '-'}</td>
-                                        <td className="text-success">{results[idx] ? `${results[idx].newWidth}×${results[idx].newHeight}` : '-'}</td>
+                    <>
+                        <div className="resize-table">
+                            <table>
+                                <colgroup>
+                                    <col style={{ width: '58%' }} />
+                                    <col style={{ width: '16%' }} />
+                                    <col style={{ width: '6%' }} />
+                                    <col style={{ width: '14%' }} />
+                                    <col style={{ width: '6%' }} />
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th>图片</th>
+                                        <th>原尺寸</th>
+                                        <th>→</th>
+                                        <th>新尺寸</th>
+                                        <th style={{ width: 60 }}>操作</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    {images.map((img, idx) => (
+                                        <tr key={img.id}>
+                                            <td className="resize-name">
+                                                <span className="cell-file">
+                                                    <img className="cell-thumb" src={img.url} alt="thumb" />
+                                                    <span className="cell-name">{img.name}</span>
+                                                    <button className="del-btn" onClick={() => removeImage(idx)} title="删除">×</button>
+                                                </span>
+                                            </td>
+                                            <td>{results[idx] ? `${results[idx].origWidth}×${results[idx].origHeight}` : '-'}</td>
+                                            <td>{results[idx] ? '→' : '-'}</td>
+                                            <td className="text-success">{results[idx] ? `${results[idx].newWidth}×${results[idx].newHeight}` : '-'}</td>
+                                            <td>
+                                                <button className="icon-btn delete" onClick={() => removeImage(idx)} title="删除">🗑️</button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
                 )}
             </div>
 

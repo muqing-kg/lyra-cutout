@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import Lightbox from './Lightbox.jsx';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
@@ -16,6 +17,7 @@ const ImageStitcher = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [result, setResult] = useState(null);
     const canvasRef = useRef(null);
+    const [viewerOpen, setViewerOpen] = useState(false);
 
     // 上传图片
     const handleUpload = (e) => {
@@ -157,47 +159,48 @@ const ImageStitcher = () => {
                         )}
                     </div>
 
-                    <div className="field">
-                        <span className="field-label">拼接方向</span>
-                        <div className="mode-selector">
-                            <button
-                                type="button"
-                                className={`mode-btn ${direction === 'vertical' ? 'active' : ''}`}
-                                onClick={() => { setDirection('vertical'); setResult(null); }}
-                            >
-                                ↕️ 垂直
-                            </button>
-                            <button
-                                type="button"
-                                className={`mode-btn ${direction === 'horizontal' ? 'active' : ''}`}
-                                onClick={() => { setDirection('horizontal'); setResult(null); }}
-                            >
-                                ↔️ 水平
-                            </button>
+                    <div className="inline-controls">
+                        <div className="field">
+                            <span className="field-label">拼接方向</span>
+                            <div className="mode-selector">
+                                <button
+                                    type="button"
+                                    className={`mode-btn ${direction === 'vertical' ? 'active' : ''}`}
+                                    onClick={() => { setDirection('vertical'); setResult(null); }}
+                                >
+                                    ↕️ 垂直
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`mode-btn ${direction === 'horizontal' ? 'active' : ''}`}
+                                    onClick={() => { setDirection('horizontal'); setResult(null); }}
+                                >
+                                    ↔️ 水平
+                                </button>
+                            </div>
                         </div>
-                    </div>
-
-                    <div className="field">
-                        <span className="field-label">间距 (px)</span>
-                        <input
-                            type="number"
-                            className="input-field"
-                            value={gap}
-                            onChange={(e) => { setGap(parseInt(e.target.value) || 0); setResult(null); }}
-                            min="0"
-                            max="100"
-                            style={{ width: 80 }}
-                        />
-                    </div>
-
-                    <div className="field">
-                        <span className="field-label">背景色</span>
-                        <input
-                            type="color"
-                            value={bgColor}
-                            onChange={(e) => { setBgColor(e.target.value); setResult(null); }}
-                            style={{ width: 40, height: 30, padding: 0, border: 'none', cursor: 'pointer' }}
-                        />
+                        <div className="field">
+                            <span className="field-label">间距</span>
+                            <input
+                                type="number"
+                                className="input-field"
+                                value={gap}
+                                onChange={(e) => { setGap(parseInt(e.target.value) || 0); setResult(null); }}
+                                min="0"
+                                max="100"
+                                style={{ width: 80 }}
+                            />
+                            <span>px</span>
+                        </div>
+                        <div className="field">
+                            <span className="field-label">背景色</span>
+                            <input
+                                type="color"
+                                value={bgColor}
+                                onChange={(e) => { setBgColor(e.target.value); setResult(null); }}
+                                style={{ width: 40, height: 30, padding: 0, border: 'none', cursor: 'pointer' }}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -205,10 +208,11 @@ const ImageStitcher = () => {
             {/* 主内容区 */}
             <div className="stitcher-content">
                 {images.length === 0 ? (
-                    <div className="empty-state file-zone">
+                    <div className="empty-state file-zone" onClick={() => document.getElementById('stitcherInput').click()}>
                         <div className="file-zone-icon">📸</div>
                         <div className="file-zone-text">长图拼接</div>
                         <div className="file-zone-hint">将多张截图拼接成一张长图</div>
+                        <input id="stitcherInput" type="file" accept="image/*" multiple onChange={handleUpload} hidden />
                     </div>
                 ) : (
                     <div className="stitcher-layout">
@@ -235,10 +239,10 @@ const ImageStitcher = () => {
                         {/* 右侧：预览 */}
                         <div className="stitcher-preview">
                             {result ? (
-                                <img src={result} alt="result" className="stitcher-result" />
+                                <img src={result} alt="result" className="stitcher-result" onClick={() => setViewerOpen(true)} />
                             ) : (
                                 <div className="stitcher-placeholder">
-                                    点击下方按钮预览拼接效果
+                                    点击左侧添加图片，然后选择拼接参数并生成结果
                                 </div>
                             )}
                         </div>
@@ -265,6 +269,14 @@ const ImageStitcher = () => {
                         </button>
                     )}
                 </div>
+            )}
+            {result && (
+                <Lightbox
+                    open={viewerOpen}
+                    images={[result]}
+                    index={0}
+                    onClose={() => setViewerOpen(false)}
+                />
             )}
         </>
     );

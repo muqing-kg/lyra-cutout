@@ -19,6 +19,7 @@ const FormatConverter = () => {
         { value: 'png', label: 'PNG', mime: 'image/png' },
         { value: 'jpeg', label: 'JPG', mime: 'image/jpeg' },
         { value: 'webp', label: 'WebP', mime: 'image/webp' },
+        { value: 'svg', label: 'SVG', mime: 'image/svg+xml' },
     ];
 
     // 上传图片
@@ -70,16 +71,28 @@ const FormatConverter = () => {
 
                 ctx.drawImage(imgEl, 0, 0);
 
-                const mimeType = formats.find((f) => f.value === targetFormat).mime;
-                canvas.toBlob(
-                    (blob) => {
-                        const url = URL.createObjectURL(blob);
-                        const newName = img.name.replace(/\.[^.]+$/, `.${targetFormat === 'jpeg' ? 'jpg' : targetFormat}`);
-                        resolve({ ...img, result: url, newName, blob });
-                    },
-                    mimeType,
-                    quality
-                );
+                if (targetFormat === 'svg') {
+                    const dataPng = canvas.toDataURL('image/png');
+                    const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}" viewBox="0 0 ${canvas.width} ${canvas.height}">
+  <image href="${dataPng}" width="${canvas.width}" height="${canvas.height}"/>
+</svg>`;
+                    const blob = new Blob([svg], { type: 'image/svg+xml' });
+                    const url = URL.createObjectURL(blob);
+                    const newName = img.name.replace(/\.[^.]+$/, `.svg`);
+                    resolve({ ...img, result: url, newName, blob });
+                } else {
+                    const mimeType = formats.find((f) => f.value === targetFormat).mime;
+                    canvas.toBlob(
+                        (blob) => {
+                            const url = URL.createObjectURL(blob);
+                            const newName = img.name.replace(/\.[^.]+$/, `.${targetFormat === 'jpeg' ? 'jpg' : targetFormat}`);
+                            resolve({ ...img, result: url, newName, blob });
+                        },
+                        mimeType,
+                        quality
+                    );
+                }
             };
             imgEl.src = img.url;
         });
@@ -152,10 +165,11 @@ const FormatConverter = () => {
             {/* 主内容区 */}
             <div className="converter-content">
                 {images.length === 0 ? (
-                    <div className="empty-state file-zone">
+                    <div className="empty-state file-zone" onClick={() => document.getElementById('converterInput').click()}>
                         <div className="file-zone-icon">🔄</div>
                         <div className="file-zone-text">格式转换</div>
-                        <div className="file-zone-hint">PNG / JPG / WebP 互转</div>
+                        <div className="file-zone-hint">PNG / JPG / WebP / SVG 互转</div>
+                        <input id="converterInput" type="file" accept="image/*" multiple onChange={handleUpload} hidden />
                     </div>
                 ) : (
                     <div className="converter-list">

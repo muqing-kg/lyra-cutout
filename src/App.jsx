@@ -17,13 +17,13 @@ import BeforeAfter from './components/BeforeAfter';
 import Collage from './components/Collage';
 import Steganography from './components/Steganography';
 import logoSvg from './logo.svg';
+import Lightbox from './components/Lightbox.jsx';
 
-const BRAND = 'Lyra Image';
+const BRAND = 'MuQing Image';
 const BRAND_TAGLINE = '一站式智能图片处理平台';
 const BACKENDS = {
   adobe: { key: 'adobe', label: 'Adobe Express（免费）' },
   removebg: { key: 'removebg', label: 'remove.bg 云端' },
-  local: { key: 'local', label: '本地 rembg' },
 };
 
 function ensurePngName(name) {
@@ -45,11 +45,32 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('remove');
   const [apiKey, setApiKey] = useState('');
   const [backend, setBackend] = useState(BACKENDS.adobe.key);
-  // 默认走本地开发代理 /rembg -> http://localhost:7000
-  const [localEndpoint, setLocalEndpoint] = useState('/rembg');
   const [files, setFiles] = useState([]);
   const [processing, setProcessing] = useState(false);
   const [results, setResults] = useState([]);
+  const [feather, setFeather] = useState(2);
+  const [threshold, setThreshold] = useState(0.12);
+  const [expand, setExpand] = useState(0);
+  const PRESETS = [
+    { name: '人像柔边', feather: 4, threshold: 0.12, expand: 2 },
+    { name: '商品白底', feather: 1, threshold: 0.30, expand: -2 },
+    { name: '发丝毛发', feather: 3, threshold: 0.08, expand: 4 },
+    { name: 'Logo扁平', feather: 0, threshold: 0.40, expand: 0 },
+    { name: '复杂纹理服饰', feather: 2, threshold: 0.18, expand: 3 },
+    { name: '透明玻璃/瓶', feather: 2, threshold: 0.06, expand: 1 },
+    { name: '纯色背景强切', feather: 1, threshold: 0.60, expand: -4 },
+    { name: '高对比硬边', feather: 0, threshold: 0.50, expand: 0 },
+  ];
+  const applyPreset = (p) => {
+    setFeather(p.feather);
+    setThreshold(p.threshold);
+    setExpand(p.expand);
+  };
+  const resetParams = () => {
+    setFeather(0);
+    setThreshold(0);
+    setExpand(0);
+  };
 
   const doneCount = useMemo(
     () => results.filter((r) => r.status === 'done').length,
@@ -60,6 +81,22 @@ export default function App() {
     () => formatStatus(processing, files, doneCount),
     [processing, files, doneCount],
   );
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
+  const viewerImages = useMemo(() => results.filter(r => r.url).map(r => r.url), [results]);
+  const openViewer = (idx) => {
+    const filteredIndex = results.slice(0, idx).filter(r => r.url).length;
+    setViewerIndex(filteredIndex);
+    setViewerOpen(true);
+  };
+  const filePreviews = useMemo(() => files.map(f => URL.createObjectURL(f)), [files]);
+  const removeFile = (idx) => {
+    const removed = files[idx];
+    // 释放预览 URL
+    try { URL.revokeObjectURL(filePreviews[idx]); } catch {}
+    setFiles((prev) => prev.filter((_, i) => i !== idx));
+    setResults((prev) => prev.filter((r) => r.name !== removed.name));
+  };
 
   const handleFileChange = (e) => {
     const list = Array.from(e.target.files || []);
@@ -81,13 +118,12 @@ export default function App() {
   const start = async () => {
     if (!files.length) return;
     if (backend === BACKENDS.removebg.key && !apiKey.trim()) return;
-    if (backend === BACKENDS.local.key && !localEndpoint.trim()) return;
     setProcessing(true);
 
     // 选择处理函数
     const processFunc = backend === BACKENDS.adobe.key
       ? processWithAdobe
-      : (file) => processSingle(file, apiKey.trim());
+      : (file) => processRemoveBg(file, apiKey.trim());
 
     // 并发处理：将文件分成多个批次
     const concurrency = Math.min(MAX_CONCURRENCY, files.length);
@@ -126,7 +162,7 @@ export default function App() {
     );
 
     try {
-      const blob = await removeBackgroundWithAdobe(file);
+      const blob = await removeBackgroundWithAdobe(file, { threshold, feather, expand });
       const objectUrl = URL.createObjectURL(blob);
       setResults((prev) =>
         prev.map((r) =>
@@ -152,7 +188,7 @@ export default function App() {
     }
   };
 
-  const processSingle = async (file, key) => {
+  const processRemoveBg = async (file, key) => {
     setResults((prev) =>
       prev.map((r) =>
         r.name === file.name ? { ...r, status: 'uploading', error: '' } : r,
@@ -160,20 +196,12 @@ export default function App() {
     );
 
     const formData = new FormData();
-    let url = 'https://api.remove.bg/v1.0/removebg';
+    const url = 'https://api.remove.bg/v1.0/removebg';
     const headers = {};
-    if (backend === BACKENDS.removebg.key) {
-      formData.append('image_file', file, file.name);
-      headers['X-Api-Key'] = key;
-      // 使用 full 以请求与原图一致的分辨率（remove.bg 免费额度会强制降为 preview）
-      formData.append('size', 'full');
-      formData.append('type', 'auto');
-    } else {
-      // rembg 服务器使用 'file' 字段名，端点是 /api/remove
-      formData.append('file', file, file.name);
-      const base = localEndpoint.trim().replace(/\/$/, '');
-      url = `${base}/api/remove`;
-    }
+    formData.append('image_file', file, file.name);
+    headers['X-Api-Key'] = key;
+    formData.append('size', 'full');
+    formData.append('type', 'auto');
 
     let res;
     try {
@@ -244,12 +272,43 @@ export default function App() {
 
   return (
     <div className="app-shell">
+      <aside className="brand-panel">
+        <div className="brand-hero">
+          <div className="brand-logo">
+            <img src={logoSvg} alt="MuQing Image Logo" />
+          </div>
+          <h2 className="brand-title">{BRAND}</h2>
+          <p className="brand-tagline">
+            {activeTab === 'remove' && <>{BRAND_TAGLINE}<br />批量移除图片背景</>}
+            {activeTab === 'crop' && <>批量裁剪工具<br />统一比例，高效处理</>}
+            {activeTab === 'color' && <>色彩和谐分析器<br />提取主色调</>}
+            {activeTab === 'smartcrop' && <>AI 智能构图<br />自动识别主体</>}
+            {activeTab === 'rename' && <>智能重命名<br />AI 识别内容</>}
+            {activeTab === 'stitch' && <>长图拼接<br />截图拼接神器</>}
+            {activeTab === 'mosaic' && <>隐私马赛克<br />保护敏感信息</>}
+            {activeTab === 'watermark' && <>批量水印<br />版权保护利器</>}
+            {activeTab === 'compress' && <>图片压缩<br />减小文件体积</>}
+            {activeTab === 'convert' && <>格式转换<br />PNG/JPG/WebP</>}
+            {activeTab === 'resize' && <>尺寸调整<br />批量缩放图片</>}
+            {activeTab === 'exif' && <>EXIF 查看器<br />查看/清除元数据</>}
+            {activeTab === 'compare' && <>图片对比<br />Before/After 滑块</>}
+            {activeTab === 'collage' && <>拼贴画<br />九宫格/多布局</>}
+            {activeTab === 'stego' && <>图片隐写术<br />隐藏秘密信息</>}
+          </p>
+        </div>
+        <div className="brand-features">
+          <div className="brand-feature"><span className="brand-feature-icon">🆓</span><span>完全免费</span></div>
+          <div className="brand-feature"><span className="brand-feature-icon">🔒</span><span>本地处理</span></div>
+          <div className="brand-feature"><span className="brand-feature-icon">📦</span><span>批量操作</span></div>
+          <div className="brand-feature"><span className="brand-feature-icon">⚡</span><span>极速处理</span></div>
+        </div>
+      </aside>
       {/* 左侧：主功能区 */}
       <div className="main-content">
         {/* 页头 */}
         <div className="page-header">
-          <h1 className="page-title">{BRAND}</h1>
-          <span className="page-badge">Beta</span>
+          <h1 className="page-title">一站式智能图片处理平台</h1>
+          
         </div>
 
         {/* Tab 导航 */}
@@ -325,23 +384,78 @@ export default function App() {
                     >
                       remove.bg
                     </button>
-                    <button
-                      type="button"
-                      className={`mode-btn ${backend === BACKENDS.local.key ? 'active' : ''}`}
-                      onClick={() => setBackend(BACKENDS.local.key)}
-                    >
-                      本地 rembg
-                    </button>
                   </div>
                 </div>
 
                 {/* 模式提示/配置 */}
                 <div className="control-row">
                   {backend === BACKENDS.adobe.key && (
-                    <div className="hint-card success">
-                      <span className="hint-icon">✨</span>
-                      <span>Adobe Sensei AI · 免费高质量 · 无需 API Key</span>
-                    </div>
+                    <>
+                      <div className="hint-card success">
+                        <span className="hint-icon">✨</span>
+                        <span>Adobe Sensei AI · 免费高质量 · 无需 API Key</span>
+                      </div>
+                      <div className="inline-controls">
+                        <div className="field">
+                          <span className="field-label">边缘羽化</span>
+                          <input
+                            type="range"
+                            min="0"
+                            max="12"
+                            step="1"
+                            value={feather}
+                            onChange={(e) => setFeather(parseInt(e.target.value))}
+                          />
+                          <span>{feather}px</span>
+                        </div>
+                        <div className="field">
+                          <span className="field-label">阈值</span>
+                          <input
+                            type="range"
+                            min="0"
+                            max="0.8"
+                            step="0.01"
+                            value={threshold}
+                            onChange={(e) => setThreshold(parseFloat(e.target.value))}
+                          />
+                          <span>{Math.round(threshold * 100)}%</span>
+                        </div>
+                        <div className="field">
+                          <span className="field-label">边缘扩展</span>
+                          <input
+                            type="range"
+                            min="-30"
+                            max="30"
+                            step="1"
+                            value={expand}
+                            onChange={(e) => setExpand(parseInt(e.target.value))}
+                          />
+                          <span>{expand >= 0 ? `+${expand}px` : `${expand}px`}</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          onClick={resetParams}
+                        >
+                          重置参数
+                        </button>
+                      </div>
+                      <div className="field">
+                        <span className="field-label">预设</span>
+                        <div className="mode-selector">
+                          {PRESETS.map((p) => (
+                            <button
+                              key={p.name}
+                              type="button"
+                              className="mode-btn"
+                              onClick={() => applyPreset(p)}
+                            >
+                              {p.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
                   )}
 
                   {backend === BACKENDS.removebg.key && (
@@ -357,18 +471,7 @@ export default function App() {
                     </div>
                   )}
 
-                  {backend === BACKENDS.local.key && (
-                    <div className="field">
-                      <span className="field-label">服务地址</span>
-                      <input
-                        id="localEndpoint"
-                        type="text"
-                        placeholder="例如 http://localhost:7000"
-                        value={localEndpoint}
-                        onChange={(e) => setLocalEndpoint(e.target.value)}
-                      />
-                    </div>
-                  )}
+                  
                 </div>
               </div>
             </div>
@@ -391,10 +494,14 @@ export default function App() {
             {/* 已选文件列表 */}
             {files.length > 0 && (
               <div className="file-list">
-                {files.map((f) => (
-                  <span className="file-pill" key={f.name}>
-                    📄 {f.name}
-                  </span>
+                {files.map((f, idx) => (
+                  <div className="file-card" key={`${f.name}-${idx}`}>
+                    <img className="file-thumb" src={filePreviews[idx]} alt={f.name} />
+                    <div className="file-meta">
+                      <div className="file-name">{f.name}</div>
+                      <button className="del-btn" onClick={() => removeFile(idx)} title="删除">×</button>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
@@ -407,8 +514,7 @@ export default function App() {
                 disabled={
                   processing ||
                   !files.length ||
-                  (backend === BACKENDS.removebg.key && !apiKey.trim()) ||
-                  (backend === BACKENDS.local.key && !localEndpoint.trim())
+                  (backend === BACKENDS.removebg.key && !apiKey.trim())
                 }
               >
                 {processing ? '⏳ 处理中…' : '🚀 开始批处理'}
@@ -428,8 +534,8 @@ export default function App() {
             {/* 结果网格 */}
             {results.length > 0 && (
               <div className="results-grid">
-                {results.map((item) => (
-                  <ResultCard key={item.name} item={item} />
+                {results.map((item, idx) => (
+                  <ResultCard key={item.name} item={item} onPreview={() => openViewer(idx)} />
                 ))}
               </div>
             )}
@@ -443,9 +549,6 @@ export default function App() {
               )}
               {backend === BACKENDS.removebg.key && (
                 <>· remove.bg 免费额度有限，付费可获原始分辨率<br /></>
-              )}
-              {backend === BACKENDS.local.key && (
-                <>· 本地 rembg 模式需自行部署服务<br /></>
               )}
             </div>
           </>
@@ -493,46 +596,22 @@ export default function App() {
         {/* 图片隐写模块 */}
         {activeTab === 'stego' && <Steganography />}
       </div>
-
-      {/* 右侧：品牌展示区 */}
-      <aside className="brand-panel">
-        <div className="brand-logo">
-          <img src={logoSvg} alt="Lyra Cutout Logo" />
-        </div>
-        <h2 className="brand-title">{BRAND}</h2>
-        <p className="brand-tagline">
-          {activeTab === 'remove' && <>{BRAND_TAGLINE}<br />批量移除图片背景</>}
-          {activeTab === 'crop' && <>批量裁剪工具<br />统一比例，高效处理</>}
-          {activeTab === 'color' && <>色彩和谐分析器<br />提取主色调</>}
-          {activeTab === 'smartcrop' && <>AI 智能构图<br />自动识别主体</>}
-          {activeTab === 'rename' && <>智能重命名<br />AI 识别内容</>}
-          {activeTab === 'stitch' && <>长图拼接<br />截图拼接神器</>}
-          {activeTab === 'mosaic' && <>隐私马赛克<br />保护敏感信息</>}
-          {activeTab === 'watermark' && <>批量水印<br />版权保护利器</>}
-          {activeTab === 'compress' && <>图片压缩<br />减小文件体积</>}
-          {activeTab === 'convert' && <>格式转换<br />PNG/JPG/WebP</>}
-          {activeTab === 'resize' && <>尺寸调整<br />批量缩放图片</>}
-          {activeTab === 'exif' && <>EXIF 查看器<br />查看/清除元数据</>}
-          {activeTab === 'compare' && <>图片对比<br />Before/After 滑块</>}
-          {activeTab === 'collage' && <>拼贴画<br />九宫格/多布局</>}
-          {activeTab === 'stego' && <>图片隐写术<br />隐藏秘密信息</>}
-        </p>
-        <div className="brand-features">
-          <div className="brand-feature"><span className="brand-feature-icon">🆓</span><span>完全免费</span></div>
-          <div className="brand-feature"><span className="brand-feature-icon">🔒</span><span>本地处理</span></div>
-          <div className="brand-feature"><span className="brand-feature-icon">📦</span><span>批量操作</span></div>
-          <div className="brand-feature"><span className="brand-feature-icon">⚡</span><span>极速处理</span></div>
-        </div>
-      </aside>
+      <Lightbox
+        open={viewerOpen}
+        images={viewerImages}
+        index={viewerIndex}
+        onClose={() => setViewerOpen(false)}
+        onIndexChange={setViewerIndex}
+      />
     </div>
   );
 }
 
-function ResultCard({ item }) {
+function ResultCard({ item, onPreview }) {
   return (
     <div className="result-card">
       {item.url ? (
-        <img className="result-thumb" src={item.url} alt={item.name} />
+        <img className="result-thumb" src={item.url} alt={item.name} onClick={onPreview} />
       ) : (
         <div className="result-thumb-placeholder">
           {item.status === 'uploading'
@@ -566,4 +645,3 @@ async function safeText(res) {
     return err.message || '';
   }
 }
-

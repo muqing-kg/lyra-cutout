@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { saveAs } from 'file-saver';
+import Lightbox from './Lightbox.jsx';
 
 /**
  * 拼贴画/九宫格
@@ -15,6 +16,7 @@ const Collage = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [result, setResult] = useState(null);
     const canvasRef = useRef(null);
+    const [viewerOpen, setViewerOpen] = useState(false);
 
     const layouts = [
         { value: 'grid-2x2', label: '2×2', slots: 4, cols: 2, rows: 2 },
@@ -159,39 +161,38 @@ const Collage = () => {
                         </div>
                     </div>
 
-                    <div className="field">
-                        <span className="field-label">间距</span>
-                        <input
-                            type="range"
-                            min="0"
-                            max="20"
-                            value={gap}
-                            onChange={(e) => { setGap(parseInt(e.target.value)); setResult(null); }}
-                            style={{ width: 80 }}
-                        />
-                        <span style={{ marginLeft: 8 }}>{gap}px</span>
-                    </div>
-
-                    <div className="field">
-                        <span className="field-label">背景</span>
-                        <input
-                            type="color"
-                            value={bgColor}
-                            onChange={(e) => { setBgColor(e.target.value); setResult(null); }}
-                            style={{ width: 40, height: 30 }}
-                        />
-                    </div>
-
-                    <div className="field">
-                        <span className="field-label">输出宽度</span>
-                        <input
-                            type="number"
-                            className="input-field"
-                            value={outputSize}
-                            onChange={(e) => setOutputSize(parseInt(e.target.value) || 1200)}
-                            style={{ width: 80 }}
-                        />
-                        <span style={{ marginLeft: 8 }}>px</span>
+                    <div className="inline-controls">
+                        <div className="field">
+                            <span className="field-label">间距</span>
+                            <input
+                                type="range"
+                                min="0"
+                                max="20"
+                                value={gap}
+                                onChange={(e) => { setGap(parseInt(e.target.value)); setResult(null); }}
+                            />
+                            <span>{gap}px</span>
+                        </div>
+                        <div className="field">
+                            <span className="field-label">背景</span>
+                            <input
+                                type="color"
+                                value={bgColor}
+                                onChange={(e) => { setBgColor(e.target.value); setResult(null); }}
+                                style={{ width: 40, height: 30 }}
+                            />
+                        </div>
+                        <div className="field">
+                            <span className="field-label">输出宽度</span>
+                            <input
+                                type="number"
+                                className="input-field"
+                                value={outputSize}
+                                onChange={(e) => setOutputSize(parseInt(e.target.value) || 1200)}
+                                style={{ width: 90 }}
+                            />
+                            <span>px</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -199,10 +200,11 @@ const Collage = () => {
             {/* 主内容区 */}
             <div className="collage-content">
                 {images.length === 0 ? (
-                    <div className="empty-state file-zone">
+                    <div className="empty-state file-zone" onClick={() => document.getElementById('collageInput').click()}>
                         <div className="file-zone-icon">🧩</div>
                         <div className="file-zone-text">拼贴画</div>
                         <div className="file-zone-hint">将多张图片拼成九宫格或其他布局</div>
+                        <input id="collageInput" type="file" accept="image/*" multiple onChange={handleUpload} hidden />
                     </div>
                 ) : (
                     <div className="collage-layout">
@@ -226,11 +228,11 @@ const Collage = () => {
                         {/* 右侧：预览 */}
                         <div className="collage-preview">
                             {result ? (
-                                <img src={result} alt="result" />
+                                <img src={result} alt="result" onClick={() => setViewerOpen(true)} />
                             ) : (
-                                <div className="collage-placeholder">
-                                    点击下方按钮生成预览
-                                </div>
+                            <div className="collage-placeholder">
+                                点击下方按钮生成预览
+                            </div>
                             )}
                         </div>
                     </div>
@@ -239,6 +241,14 @@ const Collage = () => {
 
             {/* 隐藏画布 */}
             <canvas ref={canvasRef} style={{ display: 'none' }} />
+            {result && (
+                <Lightbox
+                    open={viewerOpen}
+                    images={[result]}
+                    index={0}
+                    onClose={() => setViewerOpen(false)}
+                />
+            )}
 
             {/* 操作按钮 */}
             {images.length > 0 && (
